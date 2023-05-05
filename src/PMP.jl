@@ -1,5 +1,5 @@
 module PMP
 
-greet() = print("Hello World!")
+include("functions.jl")
 
 end # module PMP
