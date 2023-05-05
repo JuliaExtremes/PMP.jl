@@ -1,0 +1,8 @@
+name = "PMP"
+uuid = "06d8ee25-ca59-4012-9073-df0c6ba8cc69"
+authors = ["Anne Martin <anne.martin@polymtl.ca>"]
+version = "0.1.0"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
