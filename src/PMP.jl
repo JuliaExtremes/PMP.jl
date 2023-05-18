@@ -1,14 +1,14 @@
 module PMP
 
-using Distributions
+using Distributions, Optim
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand
+import Distributions: fit_mle
 
 import Random
 
 # distributions
-include("functions.jl")
 include("distributions/pearsontype1.jl");
 
 export

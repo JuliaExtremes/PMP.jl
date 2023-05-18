@@ -102,3 +102,35 @@ function rand(rng::Random.AbstractRNG, pd::PearsonType1)
     td = getdistribution(pd)
     return rand(rng, td)
 end
+
+# fit by maximum likelihood 
+
+function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
+    
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
+
+    fobj(θ) = -loglike(θ)
+
+    initialvalues = [-1., 1., 2., 3.]
+
+    res = optimize(fobj, initialvalues)
+
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = Optim.minimizer(res)
+    end
+    
+    return PearsonType1(θ̂...)
+    
+end
+
+function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
+
+    # TODO Replace initial values with the estimations obtained with th method of moments.
+    initialvalues = [minimum(y), maximum(y), 1., 1.]
+    
+    return fit_mle(pd, y, initialvalues)
+    
+end
