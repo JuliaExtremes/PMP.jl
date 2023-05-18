@@ -45,7 +45,7 @@ end
         
         true_log_pdf_at_x = -SpecialFunctions.logbeta(α, β) + (α-1)*log(x-a) + (β-1)*log(b-x) - (α+β-1)*log(b-a)
         
-        @test logpdf(dist, x) ≈ true_log_pdf_at_x
+        @test logpdf(pd, x) ≈ true_log_pdf_at_x
     end
     
     @testset "maximum" begin
