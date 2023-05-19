@@ -111,8 +111,6 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
 
     fobj(θ) = -loglike(θ)
 
-    initialvalues = [-1., 1., 2., 3.]
-
     res = optimize(fobj, initialvalues)
 
     if Optim.converged(res)
