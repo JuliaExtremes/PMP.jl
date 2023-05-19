@@ -1,6 +1,6 @@
 using PMP
 
-using Distributions, SpecialFunctions, Test
+using Distributions, JLD2, SpecialFunctions, Test
 
 @testset "ExtendedExtremes.jl" begin
     include("distributions/pearsontype1.jl")

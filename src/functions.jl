@@ -1,3 +1,0 @@
-
-greet() = print("Hello World!")
-
