@@ -64,3 +64,15 @@ end
         @test rand(pd) isa Any
     end
 end
+
+
+@testset "fit_mle" begin
+    # y = load("data/persontype1_sample.jld2", "y")
+
+    # fd = PMP.fit_mle(PearsonType1, y[1:10])
+
+    # @test minimum(fd) ≈ -1. atol=0.01
+    # @test maximum(fd) ≈ 1. atol=0.05
+    # @test shape(fd)[1] ≈ 2. atol=.1
+    # @test shape(fd)[2] ≈ 3. atol=.3
+end

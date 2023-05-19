@@ -7,3 +7,4 @@ build/
 docs/site/
 .vscode/
 .DS_Store
+script.jl
