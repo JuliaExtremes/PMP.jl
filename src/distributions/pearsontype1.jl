@@ -1,11 +1,11 @@
 """
     PearsonType1(a,b,α,β)
 
-The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`)has the probability density
+The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`) has the probability density
 function for ``a<y<b``
 
 ```math
-f(y; a, b, \\alpha, \\beta) = \\frac{1}{\\Beta(\\alpha, \\beta)} \\frac{(y-a)^{\\alpha-1} (b-y)^{\\beta-1}}{(b-a)^{\\alpha+\\beta-1},
+f(y; a, b, \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} \\frac{(y-a)^{\\alpha-1} (b-y)^{\\beta-1}}{(b-a)^{\\alpha+\\beta-1}},
 ```
 and 0 elsewhere.
 
@@ -17,7 +17,7 @@ PearsonType1()   # Pearson Type 1 distribution on the unit interval with shape p
 params(d)        # Get the parameters, i.e. (a, b, α, β)
 
 location(d)      # Get the location parameter, i.e. a
-scale(d)         # Get the scape parameter, i.e. b-a
+scale(d)         # Get the scale parameter, i.e. b-a
 shape(d)         # Get the shape parameters, i.e. (α, β)
 ```
 
