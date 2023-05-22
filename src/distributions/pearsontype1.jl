@@ -132,6 +132,16 @@ function mode(pd::PearsonType1)
     return mode(td)
 end
 
+function skewness(pd::PearsonType1)
+    td = getdistribution(pd)
+    return skewness(td)
+end
+
+function kurtosis(pd::PearsonType1) # kurtosis excess, not kurtosis
+    td = getdistribution(pd)
+    return kurtosis(td)
+end
+
 
 
 # fit by maximum likelihood 

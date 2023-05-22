@@ -97,6 +97,16 @@ end
     @testset "mode" begin
         @test mode(pd) ≈ mode(dist)
     end
+
+    @testset "skewness" begin
+        @test skewness(pd) ≈ skewness(dist)
+        @test skewness(pd) == sign(scale(pd))*2*(β-α)*sqrt(α+β+1)/((α+β+2)*sqrt(α*β))
+    end
+    
+    @testset "kurtosis" begin
+        @test kurtosis(pd) ≈ kurtosis(dist)
+        @test kurtosis(pd) == 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3)) 
+    end
 end
 
 

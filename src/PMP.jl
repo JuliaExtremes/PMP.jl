@@ -3,7 +3,7 @@ module PMP
 using Distributions, Optim
 
 import Distributions: @check_args, location, scale, shape, params
-import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand, mean, var, std, modes, mode
+import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand, mean, var, std, modes, mode, skewness, kurtosis
 import Distributions: fit_mle
 
 import Random
@@ -32,6 +32,8 @@ export
     var, 
     std, 
     modes, 
-    mode
+    mode, 
+    skewness,
+    kurtosis
 
 end # module PMP
