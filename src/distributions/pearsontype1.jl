@@ -112,6 +112,26 @@ function mean(pd::PearsonType1)
     return mean(td)
 end
 
+function var(pd::PearsonType1)
+    td = getdistribution(pd)
+    return var(td)
+end
+
+function std(pd::PearsonType1)
+    td = getdistribution(pd)
+    return std(td)
+end
+
+function modes(pd::PearsonType1)
+    td = getdistribution(pd)
+    return modes(td)
+end
+
+function mode(pd::PearsonType1)
+    td = getdistribution(pd)
+    return mode(td)
+end
+
 
 
 # fit by maximum likelihood 

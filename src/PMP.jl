@@ -3,7 +3,7 @@ module PMP
 using Distributions, Optim
 
 import Distributions: @check_args, location, scale, shape, params
-import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand, mean, std, var, modes, mode
+import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand, mean, var, std, modes, mode
 import Distributions: fit_mle
 
 import Random
@@ -28,7 +28,10 @@ export
     pdf,         # probability density function
     quantile,    # inverse of cdf (defined for p in (0,1))
     rand,
-
-    mean
+    mean, 
+    var, 
+    std, 
+    modes, 
+    mode
 
 end # module PMP

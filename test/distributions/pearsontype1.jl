@@ -70,12 +70,32 @@ end
 @testset "PearsonType1 statistics" begin
     pd = PearsonType1(-1.,1.,2.,3.)
     dist = PMP.getdistribution(pd)
+    α = shape(pd)[1]
+    β = shape(pd)[2]
     
     x = -.5
     
     @testset "mean" begin
         @test mean(pd) ≈ mean(dist)
-        # ajouter un test pour la valeur numerique
+        @test mean(pd) == scale(pd)*α/(α+β) + location(pd)
+    end
+
+    @testset "var" begin
+        @test var(pd) ≈ var(dist)
+        @test var(pd) == scale(pd)^2*α*β/((α+β)^2*(α+β+1))
+    end
+    
+    @testset "std" begin
+        @test std(pd) ≈ std(dist)
+        @test std(pd) == sqrt(var(pd))
+    end
+
+    @testset "modes" begin
+        @test modes(pd) ≈ modes(dist)
+    end
+    
+    @testset "mode" begin
+        @test mode(pd) ≈ mode(dist)
     end
 end
 
