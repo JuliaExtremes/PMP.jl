@@ -66,6 +66,21 @@ end
 end
 
 
+
+@testset "PearsonType1 statistics" begin
+    pd = PearsonType1(-1.,1.,2.,3.)
+    dist = PMP.getdistribution(pd)
+    
+    x = -.5
+    
+    @testset "mean" begin
+        @test mean(pd) ≈ mean(dist)
+        # ajouter un test pour la valeur numerique
+    end
+end
+
+
+
 @testset "fit_mle" begin
     # y = load("data/persontype1_sample.jld2", "y")
 

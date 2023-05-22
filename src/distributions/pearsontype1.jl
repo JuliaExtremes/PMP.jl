@@ -39,7 +39,7 @@ function PearsonType1(a::T, b::T, α::T, β::T ; check_args::Bool=true) where {T
     return PearsonType1{T}(a, b, α, β )
 end
 
-PearsonType1(a::Real, b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1(promote(a, b, α, β)...; check_args=check_args)
+PearsonType1(a::Real, b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1(promote(a, b, α , β)...; check_args=check_args)
 PearsonType1(a::Real, b::Real, α::Integer, β::Integer; check_args::Bool=true) = PearsonType1(float(a), float(b), float(α), float(β); check_args=check_args)
 PearsonType1() = PearsonType1{Float64}(0.0, 1.0, 1.0, 1.0)
 
@@ -102,6 +102,17 @@ function rand(rng::Random.AbstractRNG, pd::PearsonType1)
     td = getdistribution(pd)
     return rand(rng, td)
 end
+
+
+
+# Statistics
+
+function mean(pd::PearsonType1)
+    td = getdistribution(pd)
+    return mean(td)
+end
+
+
 
 # fit by maximum likelihood 
 
