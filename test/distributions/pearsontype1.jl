@@ -107,13 +107,18 @@ end
         @test kurtosis(pd) ≈ kurtosis(dist)
         @test kurtosis(pd) == 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3)) 
     end
+
+    @testset "entropy" begin
+        base = 3
+        @test entropy(pd) ≈ entropy(dist)
+        @test entropy(pd, base) ≈ entropy(dist, base)
+    end
 end
 
 
 
 @testset "fit_mle" begin
     # y = load("data/persontype1_sample.jld2", "y")
-
     # fd = PMP.fit_mle(PearsonType1, y[1:10])
 
     # @test minimum(fd) ≈ -1. atol=0.01

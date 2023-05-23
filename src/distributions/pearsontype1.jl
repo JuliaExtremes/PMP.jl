@@ -142,6 +142,16 @@ function kurtosis(pd::PearsonType1) # kurtosis excess, not kurtosis
     return kurtosis(td)
 end
 
+function entropy(pd::PearsonType1)
+    td = getdistribution(pd)
+    return entropy(td)
+end
+
+function entropy(pd::PearsonType1, base::Real)
+    td = getdistribution(pd)
+    return entropy(td)/log(base)
+end
+
 
 
 # fit by maximum likelihood 
