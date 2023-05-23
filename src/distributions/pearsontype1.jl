@@ -137,9 +137,18 @@ function skewness(pd::PearsonType1)
     return skewness(td)
 end
 
-function kurtosis(pd::PearsonType1) # kurtosis excess, not kurtosis
+function kurtosis(pd::PearsonType1) # excess kurtosis, not kurtosis
     td = getdistribution(pd)
     return kurtosis(td)
+end
+
+function kurtosis(pd::PearsonType1, correction::Bool)
+    td = getdistribution(pd)
+    if correction
+        return kurtosis(td)
+    else
+        return kurtosis(td) + 3.0
+    end
 end
 
 function entropy(pd::PearsonType1)
