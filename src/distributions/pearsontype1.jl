@@ -39,7 +39,7 @@ function PearsonType1(a::T, b::T, α::T, β::T ; check_args::Bool=true) where {T
     return PearsonType1{T}(a, b, α, β )
 end
 
-PearsonType1(a::Real, b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1(promote(a, b, α, β)...; check_args=check_args)
+PearsonType1(a::Real, b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1(promote(a, b, α , β)...; check_args=check_args)
 PearsonType1(a::Real, b::Real, α::Integer, β::Integer; check_args::Bool=true) = PearsonType1(float(a), float(b), float(α), float(β); check_args=check_args)
 PearsonType1() = PearsonType1{Float64}(0.0, 1.0, 1.0, 1.0)
 
@@ -102,6 +102,66 @@ function rand(rng::Random.AbstractRNG, pd::PearsonType1)
     td = getdistribution(pd)
     return rand(rng, td)
 end
+
+
+
+# Statistics
+
+function mean(pd::PearsonType1)
+    td = getdistribution(pd)
+    return mean(td)
+end
+
+function var(pd::PearsonType1)
+    td = getdistribution(pd)
+    return var(td)
+end
+
+function std(pd::PearsonType1)
+    td = getdistribution(pd)
+    return std(td)
+end
+
+function modes(pd::PearsonType1)
+    td = getdistribution(pd)
+    return modes(td)
+end
+
+function mode(pd::PearsonType1)
+    td = getdistribution(pd)
+    return mode(td)
+end
+
+function skewness(pd::PearsonType1)
+    td = getdistribution(pd)
+    return skewness(td)
+end
+
+function kurtosis(pd::PearsonType1) # excess kurtosis, not kurtosis
+    td = getdistribution(pd)
+    return kurtosis(td)
+end
+
+function kurtosis(pd::PearsonType1, correction::Bool)
+    td = getdistribution(pd)
+    if correction
+        return kurtosis(td)
+    else
+        return kurtosis(td) + 3.0
+    end
+end
+
+function entropy(pd::PearsonType1)
+    td = getdistribution(pd)
+    return entropy(td)
+end
+
+function entropy(pd::PearsonType1, base::Real)
+    td = getdistribution(pd)
+    return entropy(td)/log(base)
+end
+
+
 
 # fit by maximum likelihood 
 

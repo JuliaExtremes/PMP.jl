@@ -66,9 +66,61 @@ end
 end
 
 
+
+@testset "PearsonType1 statistics" begin
+    pd = PearsonType1(-1.,1.,2.,3.)
+    dist = PMP.getdistribution(pd)
+    α = shape(pd)[1]
+    β = shape(pd)[2]
+    
+    x = -.5
+    
+    @testset "mean" begin
+        @test mean(pd) ≈ mean(dist)
+        @test mean(pd) == scale(pd)*α/(α+β) + location(pd)
+    end
+
+    @testset "var" begin
+        @test var(pd) ≈ var(dist)
+        @test var(pd) == scale(pd)^2*α*β/((α+β)^2*(α+β+1))
+    end
+    
+    @testset "std" begin
+        @test std(pd) ≈ std(dist)
+        @test std(pd) == sqrt(var(pd))
+    end
+
+    @testset "modes" begin
+        @test modes(pd) ≈ modes(dist)
+    end
+    
+    @testset "mode" begin
+        @test mode(pd) ≈ mode(dist)
+    end
+
+    @testset "skewness" begin
+        @test skewness(pd) ≈ skewness(dist)
+        @test skewness(pd) == sign(scale(pd))*2*(β-α)*sqrt(α+β+1)/((α+β+2)*sqrt(α*β))
+    end
+    
+    @testset "kurtosis" begin
+        @test kurtosis(pd) ≈ kurtosis(dist)
+        @test kurtosis(pd) == 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3)) 
+        @test kurtosis(pd, false) ≈ kurtosis(dist, false)
+        @test kurtosis(pd, false) == kurtosis(pd) + 3
+    end
+
+    @testset "entropy" begin
+        base = 3
+        @test entropy(pd) ≈ entropy(dist)
+        @test entropy(pd, base) ≈ entropy(dist, base)
+    end
+end
+
+
+
 @testset "fit_mle" begin
     # y = load("data/persontype1_sample.jld2", "y")
-
     # fd = PMP.fit_mle(PearsonType1, y[1:10])
 
     # @test minimum(fd) ≈ -1. atol=0.01
