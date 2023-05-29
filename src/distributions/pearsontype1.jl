@@ -137,12 +137,12 @@ function skewness(pd::PearsonType1)
     return skewness(td)
 end
 
-function kurtosis(pd::PearsonType1) # excess kurtosis, not kurtosis
+function kurtosis(pd::PearsonType1) # excess kurtosis
     td = getdistribution(pd)
     return kurtosis(td)
 end
 
-function kurtosis(pd::PearsonType1, correction::Bool)
+function kurtosis(pd::PearsonType1, correction::Bool) # kurtosis
     td = getdistribution(pd)
     if correction
         return kurtosis(td)
@@ -159,6 +159,43 @@ end
 function entropy(pd::PearsonType1, base::Real)
     td = getdistribution(pd)
     return entropy(td)/log(base)
+end
+
+
+
+# fit by method of moments
+
+function fit_mme(y::Vector{<:Real})
+    # sample moments
+    mm = mean(y)
+    vv = var(y)
+    ss = skewness(y)
+    kk = kurtosis(y) + 3 # kurtosis
+
+    # verifier les conditions (skewness et kurtosis) pour une Pearson type 1 et une Pearson en général
+    aa = 2*kk - 3*ss^2 - 6
+    bb = ss*(kk + 3)
+    cc = 4*kk - 3*ss^2
+
+    a1 = sqrt(vv)/2 * ((-bb-sqrt(bb^2-4*cc*aa))/aa)
+    a2 = sqrt(vv)/2 * ((-bb+sqrt(bb^2-4*cc*aa))/aa)
+    if a1 > 0
+        tmp = a1 
+        a1 = a2 
+        a2 = tmp
+    end
+
+    m1 = -(bb+a1*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
+    m2 = -(-bb-a2*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
+    
+    # parameters estimations
+    sca = a2 - a1
+    a = mm - sca * (m1+1)/(m1+m2+2)
+    b = a + sca
+    α = m1 + 1
+    β = m2 + 1
+
+    return a, b, α, β
 end
 
 
