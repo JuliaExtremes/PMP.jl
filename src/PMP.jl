@@ -29,6 +29,7 @@ export
     pdf,         # probability density function
     quantile,    # inverse of cdf (defined for p in (0,1))
     rand,
+    
     mean, 
     var, 
     std, 
