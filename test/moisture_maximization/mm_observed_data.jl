@@ -37,3 +37,11 @@ end
 end
 
 
+
+@testset "PW_max" begin
+    pw = load("data/mm_pw_data.jld2", "PW")
+    date = load("data/mm_pw_data.jld2", "Date")
+    pw_max = PMP.PW_max(pw, date)
+
+    @test PMP.PW_max(pw, date)[3,2] == 81.0
+end

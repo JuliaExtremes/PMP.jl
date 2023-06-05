@@ -82,3 +82,20 @@ function dewpoint_to_PW(dew_data::Real)
     
     return pw_data
 end
+
+
+
+"""
+
+"""
+function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}) # nécéssaire ?
+    
+    month = Dates.month.(date)
+    df = DataFrame(PW = pw_storm, Month = month)
+    PW_max = combine(groupby(df, :Month), :PW => maximum => :PW_max)
+    
+    return PW_max
+end
+
+#function PW_return_period()
+#end
