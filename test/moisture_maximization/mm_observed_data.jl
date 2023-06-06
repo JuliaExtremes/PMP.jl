@@ -1,23 +1,24 @@
-@testset "storm_selection_cluster" begin
+@testset "storm selection" begin
+
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")
     threshold = quantile(rain, 0.95)
-    storm_PMP = PMP.storm_selection_cluster(rain, date, threshold)
 
-    @test storm_PMP[7, :].Duration == 2
-    @test storm_PMP[7, :].Rain_max == 39.8
-    @test storm_PMP[7, :].Rain_total == 43.0
-    @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
-end
+    @testset "storm_selection_cluster" begin
+        storm_PMP = PMP.storm_selection_cluster(rain, date, threshold)
 
-@testset "storm_selection_fixed" begin
-    rain = load("data/mm_rain_data.jld2", "Rain")
-    date = load("data/mm_rain_data.jld2", "Date")
-    threshold = quantile(rain, 0.95)
-    storm_PMP = PMP.storm_selection_fixed(rain, date, threshold)
+        @test storm_PMP[7, :].Duration == 2
+        @test storm_PMP[7, :].Rain_max == 39.8
+        @test storm_PMP[7, :].Rain_total == 43.0
+        @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
+    end
 
-    @test storm_PMP[7, :].Rain == 39.8
-    @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
+    @testset "storm_selection_fixed" begin
+        storm_PMP = PMP.storm_selection_fixed(rain, date, threshold)
+
+        @test storm_PMP[7, :].Rain == 39.8
+        @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
+    end
 end
 
 
@@ -38,10 +39,20 @@ end
 
 
 
-@testset "PW_max" begin
+@testset "PW and maximisation ratio" begin
+    
     pw = load("data/mm_pw_data.jld2", "PW")
     date = load("data/mm_pw_data.jld2", "Date")
-    pw_max = PMP.PW_max(pw, date)
+    
+    @testset "PW_max" begin
+        pw_max = PMP.PW_max(pw, date)
 
-    @test PMP.PW_max(pw, date)[3,2] == 81.0
+        @test pw_max[4,2] == 93.6
+    end
+
+    @testset "PW_return_period" begin
+        pw_rp = PMP.PW_return_period(100, pw, date)
+
+        @test pw_rp[4,2] == 93.74137033150302
+    end
 end

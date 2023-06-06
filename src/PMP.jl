@@ -12,7 +12,7 @@ import Random
 
 import DataFrames
 
-import Extremes: getcluster
+import Extremes: getcluster, returnlevel
 
 # distributions
 include("distributions/pearsontype1.jl");

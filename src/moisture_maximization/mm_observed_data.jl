@@ -1,3 +1,4 @@
+# Storm selection
 """
 Selection of storms to be maximized
 """
@@ -40,6 +41,7 @@ end
 
 
 
+# Maximum persisting dewpoint
 """
 The highest persisting dewpoint for some specified time interval (normally 12 or 24h) is the value equalled or exceeded at all 
 observations during the period. (2009, WMO)
@@ -57,6 +59,7 @@ end # fonction pour une tempête (dew_hourly sont les données d'une tempête)
 
 
 
+# Conversion dewpoint to PW
 """
 Conversion from dew point to precipitable water (PW), using the relation given by the Table A.1.1 of the 
 annexe of the "Manual on Estimation of Probable Maximum Precipitation (PMP)" (2009, WMO). The function takes 
@@ -85,8 +88,9 @@ end
 
 
 
+# PW and maximisation ratio
 """
-
+Estimation of the monthly maximum precipitable water 
 """
 function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}) # nécéssaire ?
     
@@ -97,5 +101,24 @@ function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}) # nécéssai
     return PW_max
 end
 
-#function PW_return_period()
-#end
+
+"""
+Estimation of the monthly precipitable water for given a return period (?)
+"""
+function PW_return_period(return_period::Real, pw_storm::Vector{<:Real}, date::Vector{Dates.Date})
+    
+    ym = Dates.yearmonth.(date)
+    month = Dates.month.(date)
+    df = DataFrame(PW = pw_storm, YM = ym, Month = month)
+    PW_month = combine(groupby(df, :YM), :PW => maximum => :PW, :Month => :Month)
+    ind = combine(groupby(df, :Month), :PW => maximum => :PW)
+    
+    PW_rp = DataFrame()
+    for i in ind.Month
+        df = filter(:Month => ==(i), PW_month)
+        pw_rp_month = DataFrame(Month = i, PW_rp = returnlevel(gevfit(df, :PW), return_period).value[1])
+        append!(PW_rp, pw_rp_month)
+    end 
+
+    return PW_rp
+end
