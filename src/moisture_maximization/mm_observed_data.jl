@@ -6,7 +6,7 @@ function storm_selection_cluster(rain_daily::Vector{<:Real}, date::Vector{Dates.
 
     cluster = getcluster(rain_daily, u, 1)
 
-    storm_rain = DataFrame() # devrait produire un array ou un df ?
+    storm_rain = DataFrame()
     for i in eachindex(cluster)
         event = DataFrame(Date = date[cluster[i].position[1]], Rain_max = maximum(cluster[i].value), 
                             Rain_total = sum(cluster[i].value), Duration = length(cluster[i].position))
@@ -18,7 +18,7 @@ end
 
 function storm_selection_fixed(rain_daily::Vector{<:Real}, date::Vector{Dates.Date}, u::Real)
     
-    df = DataFrame(Date = date, Rain = rain_daily) # même question que pour la fonction précédente
+    df = DataFrame(Date = date, Rain = rain_daily)
     df = filter(r -> r.Rain > u, df) 
 
     # est-ce que le declustering est nécessaire ?
@@ -43,7 +43,7 @@ end
 
 # Maximum persisting dewpoint
 """
-The highest persisting dewpoint for some specified time interval (normally 12 or 24h) is the value equalled or exceeded at all 
+The highest persisting dewpoint for some specified time interval (generally 12h or 24h) is the value equalled or exceeded at all 
 observations during the period. (2009, WMO)
 The function takes hourly dew point of a storm and return the max persisting dew point of it.
 """
@@ -88,7 +88,7 @@ end
 
 
 
-# PW and maximisation ratio
+# Maximum precipitable water 
 """
 Estimation of the monthly maximum precipitable water 
 """
@@ -121,4 +121,25 @@ function PW_return_period(return_period::Real, pw_storm::Vector{<:Real}, date::V
     end 
 
     return PW_rp
+end
+
+
+
+# PMP estimation
+"""
+Estimation of the maximization ratio, effective precipitation, maximized storm and PMP (moisture maximization method).
+"""
+function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
+    months = Dates.month.(date_storm) 
+    storm = DataFrame(Rain = rain_storm, PW = pw_storm, PW_max = pw_max[months .- (minimum(months)-1)])
+
+    storm.EP = storm.Rain ./ storm.PW
+
+    storm.maximization_ratio = storm.PW_max ./ storm.PW
+    storm.bounded_maximization_ratio = min.(2, storm.maximization_ratio)
+
+    storm.maximized_rain = storm.Rain .* storm.maximization_ratio
+    storm.bounded_maximized_rain = storm.Rain .* storm.bounded_maximization_ratio
+
+    return maximum(storm.maximized_rain), maximum(storm.bounded_maximized_rain), storm
 end

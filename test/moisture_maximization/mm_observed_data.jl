@@ -39,7 +39,7 @@ end
 
 
 
-@testset "PW and maximisation ratio" begin
+@testset "Maximum precipitable water" begin
     
     pw = load("data/mm_pw_data.jld2", "PW")
     date = load("data/mm_pw_data.jld2", "Date")
@@ -55,4 +55,18 @@ end
 
         @test pw_rp[4,2] == 93.74137033150302
     end
+end
+
+
+
+@testset "PMP_mm" begin
+    rain = load("data/mm_rain_data.jld2", "Rain")
+    date = load("data/mm_rain_data.jld2", "Date")
+    pw = load("data/mm_pw_data.jld2", "PW")[10673:end]
+    pw_max = PMP.PW_max(pw, date).PW_max
+
+    PMPa, PMPb, storms = PMP.PMP_mm(rain, pw, date, pw_max)
+
+    @test PMPa == 130.07567567567565
+    @test PMPb == 112.8
 end
