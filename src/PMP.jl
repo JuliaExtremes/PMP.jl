@@ -52,6 +52,16 @@ export
     #fit_bayes
 
     # moisture maxmization
+    storm_selection_cluster
+    storm_selection_fixed
+    get_max_persisting_dew
     dewpoint_to_PW
+    PW_max
+    PW_return_period
+    PMP_mm
+
+    # other PMP estimation methods
+    #PMP_GEV
+    #PMP_Hershfield
 
 end # module PMP

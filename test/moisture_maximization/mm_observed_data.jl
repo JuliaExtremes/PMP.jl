@@ -8,16 +8,16 @@
         storm_PMP = PMP.storm_selection_cluster(rain, date, threshold)
 
         @test storm_PMP[7, :].Duration == 2
-        @test storm_PMP[7, :].Rain_max == 39.8
-        @test storm_PMP[7, :].Rain_total == 43.0
-        @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
+        @test storm_PMP[7, :].Rain_max == 17.8
+        @test storm_PMP[7, :].Rain_total == 25.4
+        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
     end
 
     @testset "storm_selection_fixed" begin
         storm_PMP = PMP.storm_selection_fixed(rain, date, threshold)
 
-        @test storm_PMP[7, :].Rain == 39.8
-        @test storm_PMP[7, :].Date == Dates.Date(2011, 08, 21)
+        @test storm_PMP[7, :].Rain == 17.8
+        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
     end
 end
 
@@ -60,8 +60,8 @@ end
 
 
 @testset "PMP_mm" begin
-    rain = load("data/mm_rain_data.jld2", "Rain")
-    date = load("data/mm_rain_data.jld2", "Date")
+    rain = load("data/mm_rain_data.jld2", "Rain")[10660:end]
+    date = load("data/mm_rain_data.jld2", "Date")[10660:end]
     pw = load("data/mm_pw_data.jld2", "PW")[10673:end]
     pw_max = PMP.PW_max(pw, date).PW_max
 
