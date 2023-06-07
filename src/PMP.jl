@@ -1,6 +1,7 @@
 module PMP
 
 using Distributions, Optim
+using DataFrames, Dates, CSV, Extremes
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
@@ -9,8 +10,14 @@ import Distributions: fit_mle
 
 import Random
 
+import DataFrames
+
+import Extremes: getcluster, returnlevel
+
 # distributions
 include("distributions/pearsontype1.jl");
+
+include("moisture_maximization/mm_observed_data.jl");
 
 export
     # distribution types
@@ -38,5 +45,13 @@ export
     skewness,
     kurtosis, 
     entropy
+
+    # distribution fitting
+    fit_mme
+    #fit_mle
+    #fit_bayes
+
+    # moisture maxmization
+    dewpoint_to_PW
 
 end # module PMP
