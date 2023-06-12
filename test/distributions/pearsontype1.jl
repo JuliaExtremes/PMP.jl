@@ -121,7 +121,8 @@ end
 
 @testset "fit_mme" begin
     y = load("data/persontype1_sample.jld2", "y")
-    a, b, α, β = PMP.fit_mme(y)
+    fd = PMP.fit_mme(y)
+    a, b, α, β = params(fd)
 
     @test mean(y) ≈ (b-a)*α/(α+β) + a
     @test var(y) ≈ (b-a)^2*α*β/((α+β)^2*(α+β+1))
