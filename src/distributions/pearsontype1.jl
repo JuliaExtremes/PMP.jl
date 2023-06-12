@@ -170,9 +170,14 @@ function fit_mme(y::Vector{<:Real})
     mm = mean(y)
     vv = var(y)
     ss = skewness(y)
-    kk = kurtosis(y) + 3 # kurtosis
+    kk = kurtosis(y) + 3 # not excess kurtosis
 
-    # verifier les conditions (skewness et kurtosis) pour une Pearson type 1 et une Pearson en général
+    # the kurtosis is bounded below by the squared skewness plus 1
+    # est-ce qu'on doit tester ?
+    if ss^2 > kk-1 
+        return("There are no probability distributions with these moments")
+    end
+
     aa = 2*kk - 3*ss^2 - 6
     bb = ss*(kk + 3)
     cc = 4*kk - 3*ss^2
@@ -195,7 +200,7 @@ function fit_mme(y::Vector{<:Real})
     α = m1 + 1
     β = m2 + 1
 
-    return a, b, α, β
+    return PearsonType1(a, b, α, β)
 end
 
 
@@ -227,7 +232,6 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
     end
     
     return PearsonType1(θ̂...)
-
 end
 
 # ne fonctionne pas : erreur 
@@ -236,6 +240,5 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     
     initialvalues = PMP.fit_mme(y)
     
-    return PMP.fit_mle(pd, y, initialvalues) 
-     
+    return PMP.fit_mle(pd, y, initialvalues)  
 end
