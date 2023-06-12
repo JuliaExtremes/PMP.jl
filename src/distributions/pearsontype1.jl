@@ -203,7 +203,16 @@ end
 # fit by maximum likelihood 
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
-    
+ 
+    # PearsonDS propose de +-0.1 aux valeurs initiales
+    if initialvalues[2] > 0
+        initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
+        initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
+    else
+        initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
+        initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
+    end 
+
     loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
 
     fobj(θ) = -loglike(θ)
@@ -218,14 +227,15 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
     end
     
     return PearsonType1(θ̂...)
-    
+
 end
 
+# ne fonctionne pas : erreur 
+# MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
-
-    # TODO Replace initial values with the estimations obtained with th method of moments.
-    initialvalues = [minimum(y), maximum(y), 1., 1.]
     
-    return fit_mle(pd, y, initialvalues)
+    initialvalues = PMP.fit_mme(y)
     
+    return PMP.fit_mle(pd, y, initialvalues) 
+     
 end
