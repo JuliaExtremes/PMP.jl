@@ -1,6 +1,7 @@
-"""PMP estimation with GEV method. Return the PMP for the chosen return time, the plot of the maximal annual 
-precipitation and the GEV diagnostic plot."""
-
+"""
+PMP estimation with GEV method. Return the PMP for the chosen return time, the plot of the maximal annual 
+precipitation and the GEV diagnostic plot.
+"""
 function PMP_GEV(rain_daily::Vector{<:Real}, date::Vector{Dates.Date}, return_time::Real)
     data = DataFrame(Rain = rain_daily, Year = Dates.year.(date))
     AMP = combine(groupby(data, :Year), :Rain => maximum => :AMP)
@@ -16,7 +17,9 @@ end
 
 
 
-"""Hershfield empirical method"""
+"""
+Hershfield empirical method
+"""
 function PMP_Hershfield(rain_daily::Vector{<:Real}, date::Vector{Dates.Date}, K::Real)
     data = DataFrame(Rain = rain_daily, Year = year.(date))
     AMP = combine(groupby(data, :Year), :Rain => maximum => :AMP)

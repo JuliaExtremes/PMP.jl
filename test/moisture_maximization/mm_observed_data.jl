@@ -1,24 +1,49 @@
-@testset "storm selection" begin
+@testset "maximum rain on d₂ when d₁ < 24h" begin
+    rain = load("data/mm_pwh_data.jld2", "PW")
+    date = load("data/mm_pwh_data.jld2", "Date")
 
+    storm = PMP.max_rain_d1_24m(rain, date, 72)
+    
+    @test storm.Rain[106] == 21.0
+    @test maximum(storm.Rain) == 81.0
+end
+
+
+
+@testset "maximum rain on d₂ when d₁ ≥ 24h" begin
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")
+
+    storm = PMP.max_rain_d1_24p(rain, date, 3)
+    
+    @test storm.Rain[2791] == 15.8
+    @test maximum(storm.Rain) == 81.9
+end
+
+
+
+@testset "total precipitation" begin
+    rain = load("data/mm_rain_data.jld2", "Rain")
+    date = load("data/mm_rain_data.jld2", "Date")
+
+    storm = PMP.total_precipitation(rain, date, 24, 72)
+
+    @test storm.Rain[555] == 53.099999999999994
+
+end
+
+
+
+@testset "storm selection" begin
+    rain = load("data/mm_rain_data.jld2", "Rain")
+    date = load("data/mm_rain_data.jld2", "Date")
+
     threshold = quantile(rain, 0.95)
+    storm = PMP.storm_selection(rain, date, 0.1, 24, 72)
 
-    @testset "storm_selection_cluster" begin
-        storm_PMP = PMP.storm_selection_cluster(rain, date, threshold)
-
-        @test storm_PMP[7, :].Duration == 2
-        @test storm_PMP[7, :].Rain_max == 17.8
-        @test storm_PMP[7, :].Rain_total == 25.4
-        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
-    end
-
-    @testset "storm_selection_fixed" begin
-        storm_PMP = PMP.storm_selection_fixed(rain, date, threshold)
-
-        @test storm_PMP[7, :].Rain == 17.8
-        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
-    end
+    @test storm[7, :].Rain == 30.700000000000003
+    @test storm[7, :].Date == Dates.Date(1954, 06, 25)
+    
 end
 
 
@@ -26,7 +51,7 @@ end
 @testset "get_max_persisting_dew" begin
     dew = load("data/mm_dew_data.jld2", "Dew")
 
-    @test PMP.get_max_persisting_dew(12, dew) == 6.4
+    @test PMP.get_max_persisting_dew(dew, 12) == 6.4
 end
 
 
@@ -51,7 +76,7 @@ end
     end
 
     @testset "PW_return_period" begin
-        pw_rp = PMP.PW_return_period(100, pw, date)
+        pw_rp = PMP.PW_return_period(pw, date, 100)
 
         @test pw_rp[4,2] == 93.74137033150302
     end

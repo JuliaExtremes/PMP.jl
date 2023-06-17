@@ -19,6 +19,8 @@ include("distributions/pearsontype1.jl");
 
 include("moisture_maximization/mm_observed_data.jl");
 
+include("other_PMP_methods.jl");
+
 export
     # distribution types
     PearsonType1,
@@ -52,8 +54,10 @@ export
     #fit_bayes
 
     # moisture maxmization
-    storm_selection_cluster
-    storm_selection_fixed
+    max_rain_d1_24p
+    #max_rain_d1_24m
+    #total_precipitation
+    #storm_selection
     get_max_persisting_dew
     dewpoint_to_PW
     PW_max
@@ -61,7 +65,7 @@ export
     PMP_mm
 
     # other PMP estimation methods
-    #PMP_GEV
-    #PMP_Hershfield
+    PMP_GEV
+    PMP_Hershfield
 
 end # module PMP

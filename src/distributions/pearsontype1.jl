@@ -1,9 +1,7 @@
 """
     PearsonType1(a,b,α,β)
 
-The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`) has the probability density
-function for ``a<y<b``
-
+The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`) has the probability density function for ``a<y<b``
 ```math
 f(y; a, b, \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} \\frac{(y-a)^{\\alpha-1} (b-y)^{\\beta-1}}{(b-a)^{\\alpha+\\beta-1}},
 ```
@@ -164,8 +162,7 @@ end
 
 
 # fit by method of moments
-
-function fit_mme(y::Vector{<:Real})
+function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # sample moments
     mm = mean(y)
     vv = var(y)
@@ -175,7 +172,7 @@ function fit_mme(y::Vector{<:Real})
     # the kurtosis is bounded below by the squared skewness plus 1
     # est-ce qu'on doit tester ?
     if ss^2 > kk-1 
-        return("There are no probability distributions with these moments")
+        return("There are no probability distributions with these moments") # changer pour @warn ?
     end
 
     aa = 2*kk - 3*ss^2 - 6
@@ -238,7 +235,7 @@ end
 # MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     
-    initialvalues = PMP.fit_mme(y)
+    initialvalues = PMP.fit_mme(PearsonType1, y)
     
-    return PMP.fit_mle(pd, y, initialvalues)  
+    return PMP.fit_mle(pd, y, initialvalues)  # retour un PearsonType1 
 end

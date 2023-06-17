@@ -1,53 +1,144 @@
+function max_rain_d1_24m(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
+    
+    df1 = DataFrame(Date = date, Rain = rain)
+    storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
+    
+    first_ind = nb + 1
+    last_ind = length(df1.Rain) - nb + 1
+
+    for i in first_ind:last_ind
+        
+        event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
+        date_dif = Hour(abs(storm.Date[1] - df1.Date[i]))
+    
+        if date_dif < Hour(nb)
+            df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
+            event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
+            deleteat!(storm, 1)
+        end
+        
+        event = DataFrame(event)
+        prepend!(storm, event)
+    
+    end
+    sort!(storm)
+    
+    return storm
+end
+
+
+
+function max_rain_d1_24p(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
+    
+    df1 = DataFrame(Date = date, Rain = rain)
+    storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
+    
+    first = nb + 1
+    last = length(df1.Rain) - nb + 1
+
+    for i in first:last
+
+        event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
+        date_dif = abs(storm.Date[1] - df1.Date[i])
+            
+        if date_dif < Day(nb)
+            df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
+            event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
+            deleteat!(storm, 1)
+        end
+            
+        event = DataFrame(event)
+        prepend!(storm, event)
+            
+    end
+    sort!(storm)
+    
+    return storm
+
+end
+
+max_rain_d1_24p(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int) = max_rain_d1_24p(rain, Dates.DateTime.(date), nb)
+
+
+
+"""
+    total_precipitation(d1::Int, d2::Int=72, rain::Vector{<:Real}, date::Vector{Dates.DateTime})
+
+Estimate the greatest precipitation taken over a given duration `d₁` on a longer duration `d₂`.
+"""
+# les donnees doivent etre completes
+function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int=72)
+
+    @assert d₁ <= d₂ "the second duration should be longer than the first one."
+    @assert length(rain) == length(date) "the vectors of the rain data and the associated dates should be of the same length."
+
+    nb = floor(Int, d₂/d₁) # number of time-step of duration d₁ in time interval d₂
+    size_df1 = length(rain) - nb + 1 
+    df1 = DataFrame()
+
+    for i in 1:size_df1
+        event = DataFrame(Date = date[i], Rain = sum(rain[i:i+nb-1]))
+        append!(df1, event)
+    end
+    filter!(r -> r.Rain>0, df1)
+    
+    if d₁ < 24
+        storm = max_rain_d1_24m(df1.Rain, df1.Date, nb)
+    else
+        storm = max_rain_d1_24p(df1.Rain, df1.Date, nb)
+    end
+
+    return storm
+
+end
+
+total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.Date}, d₁::Int, d₂::Int=72) = total_precipitation(rain, Dates.DateTime.(date), d₁, d₂)
+
+
+
 # Storm selection
 """
-Selection of storms to be maximized
+    storm_selection(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, p::Real, d₁::Int, d₂::Int=72)
+
+Select storms to be maximized. 
 """
-function storm_selection_cluster(rain_daily::Vector{<:Real}, date::Vector{Dates.Date}, u::Real)
+function storm_selection(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, p::Real, d₁::Int, d₂::Int=72)
 
-    cluster = getcluster(rain_daily, u, 1)
-
-    storm_rain = DataFrame()
-    for i in eachindex(cluster)
-        event = DataFrame(Date = date[cluster[i].position[1]], Rain_max = maximum(cluster[i].value), 
-                            Rain_total = sum(cluster[i].value), Duration = length(cluster[i].position))
-        append!(storm_rain, event)
-    end
-
-    return storm_rain
-end
-
-function storm_selection_fixed(rain_daily::Vector{<:Real}, date::Vector{Dates.Date}, u::Real)
+    @assert 0 < p <= 1 "p should lie in the interval (0, 1]."
     
-    df = DataFrame(Date = date, Rain = rain_daily)
-    df = filter(r -> r.Rain > u, df) 
-
-    # est-ce que le declustering est nécessaire ?
-    storm_rain = DataFrame()
-    i = 1
-    n = size(df, 1)
-    while i < n 
-        date_dif = Dates.value.(df.Date[i+1:end] .- df.Date[i:end-1])
-        ind = findfirst(r -> r > 1, date_dif) 
-        if typeof(ind) == Nothing
-            ind = n - i + 1
-        end
-        event = filter(r -> r.Rain == maximum(df.Rain[i:i+ind-1]), df[i:i+ind-1, :])[1, :]
-        push!(storm_rain, event)
-        i = i + ind
-    end
+    df1 = PMP.total_precipitation(rain, date, d₁, d₂)
+    df1.Year = Dates.year.(df1.Date)
     
-    return storm_rain
-end
+    nYear = df1.Year[end] - df1.Year[1] + 1
+    storm = DataFrame() 
+    
+    for i in 1:nYear
+        storm_year = groupby(df1, :Year)[i]
+        nStormMax = floor(Int, p*length(storm_year.Rain)) + 1
+        
+        storm_max = sort(storm_year, :Rain, rev=true)[1:nStormMax, :]
+        append!(storm, storm_max)
+    end
+    select!(storm, :Date, :Rain)
+    
+    return storm
+
+end 
+
+storm_selection(rain::Vector{<:Real}, date::Vector{Dates.Date}, p::Real, d₁::Int, d₂::Int=72) = storm_selection(rain, Dates.DateTime.(date), p, d₁, d₂)
 
 
 
 # Maximum persisting dewpoint
 """
-The highest persisting dewpoint for some specified time interval (generally 12h or 24h) is the value equalled or exceeded at all 
-observations during the period. (2009, WMO)
-The function takes hourly dew point of a storm and return the max persisting dew point of it.
+    get_max_persisting_dew(dew_hourly::Vector{<:Real}, time_int::Int=12)
+
+Get the maximum persisting dew point of a storm.
+    
+The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all 
+observations during the period (2009, WMO).
 """
-function get_max_persisting_dew(time_int::Real, dew_hourly::Vector{<:Real})
+function get_max_persisting_dew(dew_hourly::Vector{<:Real}, time_int::Int=12)
 
     persisting_dews = []
     for k = 1:length(dew_hourly) - (time_int-1)
@@ -59,11 +150,13 @@ end # fonction pour une tempête (dew_hourly sont les données d'une tempête)
 
 
 
-# Conversion dewpoint to PW
 """
-Conversion from dew point to precipitable water (PW), using the relation given by the Table A.1.1 of the 
-annexe of the "Manual on Estimation of Probable Maximum Precipitation (PMP)" (2009, WMO). The function takes 
-a single dew point observation as an argument and returns its associated precipitable water.
+    dewpoint_to_PW(dew_data::Real)
+
+Convert dew point observation in precipitable water (PW).
+
+The relation is given by the Table A.1.1 of the annexe of the "Manual on Estimation of Probable Maximum 
+Precipitation (PMP)" (2009, WMO).
 """
 function dewpoint_to_PW(dew_data::Real)
 
@@ -90,9 +183,11 @@ end
 
 # Maximum precipitable water 
 """
-Estimation of the monthly maximum precipitable water 
+    PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date})
+
+Estimate the maximum precipitable water for each month of interest.
 """
-function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}) # nécéssaire ?
+function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date})
     
     month = Dates.month.(date)
     df = DataFrame(PW = pw_storm, Month = month)
@@ -103,9 +198,11 @@ end
 
 
 """
-Estimation of the monthly precipitable water for given a return period (?)
+    PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}, return_period::Int=100)
+
+Estimate the precipitable water return value for each month of interest.
 """
-function PW_return_period(return_period::Real, pw_storm::Vector{<:Real}, date::Vector{Dates.Date})
+function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}, return_period::Int=100)
     
     ym = Dates.yearmonth.(date)
     month = Dates.month.(date)
@@ -125,7 +222,7 @@ end
 
 
 
-# PMP estimation
+# Storm maximization
 """
 Estimation of the maximization ratio, effective precipitation, maximized storm and PMP (moisture maximization method).
 """
@@ -143,3 +240,8 @@ function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm
 
     return maximum(storm.maximized_rain), maximum(storm.bounded_maximized_rain), storm
 end
+
+# j'aimerais diviser cette fonction en deux : une fonction de maximisation des tempetes qui retourne un dataframe 
+# contenant toutes les tempetes maximisees et une seconde qui retourne la PMP (devrait-on seulement retourner 
+# l'evenement associe a la PMP sans toutes les tempetes ?)
+# modifier pour le ratio de maximisation borne 
