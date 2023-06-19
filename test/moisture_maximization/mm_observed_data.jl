@@ -1,8 +1,9 @@
+# modifier les tests : donnees synthetique
 @testset "maximum rain on d₂ when d₁ < 24h" begin
     rain = load("data/mm_pwh_data.jld2", "PW")
     date = load("data/mm_pwh_data.jld2", "Date")
 
-    storm = PMP.max_rain_d1_24m(rain, date, 72)
+    storm = PMP.max_rain(rain, date, 72)
     
     @test storm.Rain[106] == 21.0
     @test maximum(storm.Rain) == 81.0
@@ -10,11 +11,12 @@ end
 
 
 
+# modifier les tests : donnees synthetique
 @testset "maximum rain on d₂ when d₁ ≥ 24h" begin
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")
 
-    storm = PMP.max_rain_d1_24p(rain, date, 3)
+    storm = PMP.max_rain(rain, date, 3, false)
     
     @test storm.Rain[2791] == 15.8
     @test maximum(storm.Rain) == 81.9
@@ -22,6 +24,7 @@ end
 
 
 
+# modifier les tests : donnees synthetique
 @testset "total precipitation" begin
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")
@@ -34,6 +37,7 @@ end
 
 
 
+# modifier les tests : donnees synthetique
 @testset "storm selection" begin
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")

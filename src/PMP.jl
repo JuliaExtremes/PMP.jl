@@ -54,10 +54,9 @@ export
     #fit_bayes
 
     # moisture maxmization
-    max_rain_d1_24p
-    #max_rain_d1_24m
-    #total_precipitation
-    #storm_selection
+    max_rain
+    total_precipitation
+    storm_selection
     get_max_persisting_dew
     dewpoint_to_PW
     PW_max

@@ -1,10 +1,10 @@
-function max_rain_d1_24m(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
+function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
     
     df1 = DataFrame(Date = date, Rain = rain)
     storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
     
     first_ind = nb + 1
-    last_ind = length(df1.Rain) - nb + 1
+    last_ind = length(rain) - nb + 1
 
     for i in first_ind:last_ind
         
@@ -26,38 +26,40 @@ function max_rain_d1_24m(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb:
     return storm
 end
 
-
-
-function max_rain_d1_24p(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
+function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int, d24::Bool)
     
-    df1 = DataFrame(Date = date, Rain = rain)
-    storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
-    
-    first = nb + 1
-    last = length(df1.Rain) - nb + 1
+    if d24
+        return max_rain(rain, date, nb)
+    else
+        df1 = DataFrame(Date = date, Rain = rain)
+        storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
+        
+        first = nb + 1
+        last = length(df1.Rain) - nb + 1
 
-    for i in first:last
+        for i in first:last
 
-        event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
-        date_dif = abs(storm.Date[1] - df1.Date[i])
-            
-        if date_dif < Day(nb)
-            df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
-            event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
-            deleteat!(storm, 1)
+            event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
+            date_dif = abs(storm.Date[1] - df1.Date[i])
+                
+            if date_dif < Day(nb)
+                df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
+                event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
+                deleteat!(storm, 1)
+            end
+                
+            event = DataFrame(event)
+            prepend!(storm, event)
+                
         end
-            
-        event = DataFrame(event)
-        prepend!(storm, event)
-            
+        sort!(storm)
+        
+        return storm
     end
-    sort!(storm)
-    
-    return storm
-
 end
 
-max_rain_d1_24p(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int) = max_rain_d1_24p(rain, Dates.DateTime.(date), nb)
+max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int) = max_rain(rain, Dates.DateTime.(date), nb)
+max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int, d24::Bool) = max_rain(rain, Dates.DateTime.(date), nb, d24)
 
 
 
@@ -81,11 +83,11 @@ function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime},
         append!(df1, event)
     end
     filter!(r -> r.Rain>0, df1)
-    
+
     if d₁ < 24
-        storm = max_rain_d1_24m(df1.Rain, df1.Date, nb)
+        storm = max_rain(df1.Rain, df1.Date, nb)
     else
-        storm = max_rain_d1_24p(df1.Rain, df1.Date, nb)
+        storm = max_rain(df1.Rain, df1.Date, nb, false)
     end
 
     return storm
