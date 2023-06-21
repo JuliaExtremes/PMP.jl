@@ -144,9 +144,8 @@ function kurtosis(pd::PearsonType1, correction::Bool) # kurtosis
     td = getdistribution(pd)
     if correction
         return kurtosis(td)
-    else
-        return kurtosis(td) + 3.0
     end
+    return kurtosis(td) + 3.0
 end
 
 function entropy(pd::PearsonType1)
@@ -172,7 +171,7 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # the kurtosis is bounded below by the squared skewness plus 1
     # est-ce qu'on doit tester ?
     if ss^2 > kk-1 
-        return("There are no probability distributions with these moments") # changer pour @warn ?
+        return("There are no probability distributions with these moments") # changer pour @warn ? @error pour arreter la fct
     end
 
     aa = 2*kk - 3*ss^2 - 6

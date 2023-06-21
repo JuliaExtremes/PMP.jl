@@ -1,65 +1,55 @@
-function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int)
+function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime})
     
     df1 = DataFrame(Date = date, Rain = rain)
-    storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
-    
-    first_ind = nb + 1
-    last_ind = length(rain) - nb + 1
+    storm = DataFrame(df1[1, :])
 
-    for i in first_ind:last_ind
-        
-        event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
-        date_dif = Hour(abs(storm.Date[1] - df1.Date[i]))
-    
+    for i in 2:length(df1.Rain)
+        date_dif = Hour(abs(df1.date[i] - storm.date[1]))
+        event = DataFrame(df1[i, :])
+
         if date_dif < Hour(nb)
-            df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
-            event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
+            df2 = append!(event, DataFrame(storm[1, :]))
+            event = DataFrame(filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :])
             deleteat!(storm, 1)
         end
         
-        event = DataFrame(event)
         prepend!(storm, event)
-    
     end
+
     sort!(storm)
-    
     return storm
+
 end
 
-function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, nb::Int, d24::Bool)
+function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d24::Bool)
     
     if d24
         return max_rain(rain, date, nb)
-    else
-        df1 = DataFrame(Date = date, Rain = rain)
-        storm = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[1:nb]), df1[1:nb, :])[1, :])
-        
-        first = nb + 1
-        last = length(df1.Rain) - nb + 1
-
-        for i in first:last
-
-            event = filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :]
-            date_dif = abs(storm.Date[1] - df1.Date[i])
-                
-            if date_dif < Day(nb)
-                df2 = append!(DataFrame(storm[1,:]), DataFrame(df1[i, :]))
-                event = filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :]
-                deleteat!(storm, 1)
-            end
-                
-            event = DataFrame(event)
-            prepend!(storm, event)
-                
-        end
-        sort!(storm)
-        
-        return storm
     end
+
+    df1 = DataFrame(Date = date, Rain = rain)
+    storm = DataFrame(df1[1, :])
+    
+    for i in 2:length(df1.Rain)
+        date_dif = abs(df1.date[i] - storm.Date[1])
+        event = DataFrame(df1[i, :])
+            
+        if date_dif < Day(nb)
+            df2 = append!(event, DataFrame(storm[1, :]))
+            event = DataFrame(filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :])
+            deleteat!(storm, 1)
+        end
+            
+        prepend!(storm, event)
+    end
+    
+    sort!(storm)
+    return storm
+
 end
 
-max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int) = max_rain(rain, Dates.DateTime.(date), nb)
-max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int, d24::Bool) = max_rain(rain, Dates.DateTime.(date), nb, d24)
+max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}) = max_rain(rain, Dates.DateTime.(date))
+max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date} d24::Bool) = max_rain(rain, Dates.DateTime.(date), d24)
 
 
 
@@ -68,26 +58,34 @@ max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}, nb::Int, d24::Bool) = m
 
 Estimate the greatest precipitation taken over a given duration `d₁` on a longer duration `d₂`.
 """
-# les donnees doivent etre completes
 function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int=72)
 
     @assert d₁ <= d₂ "the second duration should be longer than the first one."
     @assert length(rain) == length(date) "the vectors of the rain data and the associated dates should be of the same length."
 
-    nb = floor(Int, d₂/d₁) # number of time-step of duration d₁ in time interval d₂
-    size_df1 = length(rain) - nb + 1 
-    df1 = DataFrame()
+    nb = floor(Int, d₂/d₁) # window size
+    rain_d₂ = RollingFunctions.rolling(sum, rain, nb)
+    
+    size_df1 = length(rain_d₂)
+    df1 = DataFrame(Date = date[1:size_df1], Rain = rain_d₂)
+    
+    storm = DataFrame()
 
-    for i in 1:size_df1
-        event = DataFrame(Date = date[i], Rain = sum(rain[i:i+nb-1]))
-        append!(df1, event)
+    for i in 1:nb:(size_df1-nb+1)
+        event = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :])
+        append!(storm, event)
     end
-    filter!(r -> r.Rain>0, df1)
+    for i in (size_df1-nb+1):size_df1
+        event = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[i:end]), df1[i:end, :])[1, :])
+        append!(storm, event)
+    end
+
+    filter!(r -> r.Rain>0, storm)
 
     if d₁ < 24
-        storm = max_rain(df1.Rain, df1.Date, nb)
+        storm = max_rain(storm.Rain, storm.Date)
     else
-        storm = max_rain(df1.Rain, df1.Date, nb, false)
+        storm = max_rain(storm.Rain, storm.Date, false)
     end
 
     return storm
