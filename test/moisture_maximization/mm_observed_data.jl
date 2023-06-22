@@ -1,24 +1,55 @@
+@testset "total precipitation" begin
+
+    @testset "maximum rain on d₂ when d₁ ≥ 24h" begin
+        rain1 = load("data/mm_shortdata1.jld2", "Rain")
+        date1 = load("data/mm_shortdata1.jld2", "Date")
+
+        storm_a = PMP.total_precipitation(rain1, date1, 24, 72)
+        storm_b = PMP.total_precipitation(rain1, Dates.DateTime.(date1), 24, 72)
+
+        @test storm_a == storm_b
+        @test length(storm_a.Rain) == 4
+        @test maximum(storm_a.Rain) == 25.5
+    end
+
+    @testset "maximum rain on d₂ when d₁ < 24h" begin
+        rain2 = load("data/mm_shortdata2.jld2", "Rain")
+        date2 = load("data/mm_shortdata2.jld2", "Date")
+
+        storm_c = PMP.total_precipitation(rain2, date2, 3, 24)
+
+        @test storm_c.Date[1] == DateTime(2011, 06, 01, 03)
+        @test minimum(storm_c.Rain) == 3.4
+    end
+
+end
+
+
+
 @testset "storm selection" begin
 
     rain = load("data/mm_rain_data.jld2", "Rain")
     date = load("data/mm_rain_data.jld2", "Date")
-    threshold = quantile(rain, 0.95)
 
-    @testset "storm_selection_cluster" begin
-        storm_PMP = PMP.storm_selection_cluster(rain, date, threshold)
+    storm_a = PMP.storm_selection(rain, date, 0.1, 24, 72)
 
-        @test storm_PMP[7, :].Duration == 2
-        @test storm_PMP[7, :].Rain_max == 17.8
-        @test storm_PMP[7, :].Rain_total == 25.4
-        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
+    @testset "1953-2012" begin
+        storm_b = PMP.storm_selection(rain, date, 0.1, 24)
+
+        @test storm_a == storm_b
+        @test maximum(storm_a.Rain) == 99.5
     end
 
-    @testset "storm_selection_fixed" begin
-        storm_PMP = PMP.storm_selection_fixed(rain, date, threshold)
+    @testset "1996" begin
+        data1996 = filter(r -> Dates.Year.(r.date) == Year(1996), DataFrames.DataFrame(date = date, rain = rain))
 
-        @test storm_PMP[7, :].Rain == 17.8
-        @test storm_PMP[7, :].Date == Dates.Date(1953, 10, 06)
+        storm_c = filter(r -> Dates.Year.(r.Date) == Year(1996), storm_a)
+        precip1996 = PMP.total_precipitation(data1996.rain, data1996.date, 24, 72)
+
+        @test length(storm_c.Rain) == floor(Int, length(precip1996.Rain)/10)+1
+        @test maximum(storm_c.Rain) == maximum(precip1996.Rain)
     end
+
 end
 
 
@@ -26,7 +57,7 @@ end
 @testset "get_max_persisting_dew" begin
     dew = load("data/mm_dew_data.jld2", "Dew")
 
-    @test PMP.get_max_persisting_dew(12, dew) == 6.4
+    @test PMP.get_max_persisting_dew(dew, 12) == 6.4
 end
 
 
@@ -51,7 +82,7 @@ end
     end
 
     @testset "PW_return_period" begin
-        pw_rp = PMP.PW_return_period(100, pw, date)
+        pw_rp = PMP.PW_return_period(pw, date, 100)
 
         @test pw_rp[4,2] == 93.74137033150302
     end

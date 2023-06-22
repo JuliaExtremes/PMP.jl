@@ -1,7 +1,7 @@
 module PMP
 
 using Distributions, Optim
-using DataFrames, Dates, CSV, Extremes
+using DataFrames, Dates, CSV, Extremes, RollingFunctions
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
@@ -18,6 +18,8 @@ import Extremes: getcluster, returnlevel
 include("distributions/pearsontype1.jl");
 
 include("moisture_maximization/mm_observed_data.jl");
+
+include("other_PMP_methods.jl");
 
 export
     # distribution types
@@ -52,8 +54,8 @@ export
     #fit_bayes
 
     # moisture maxmization
-    storm_selection_cluster
-    storm_selection_fixed
+    total_precipitation
+    storm_selection
     get_max_persisting_dew
     dewpoint_to_PW
     PW_max
@@ -61,7 +63,7 @@ export
     PMP_mm
 
     # other PMP estimation methods
-    #PMP_GEV
-    #PMP_Hershfield
+    PMP_GEV
+    PMP_Hershfield
 
 end # module PMP
