@@ -54,7 +54,6 @@ export
     #fit_bayes
 
     # moisture maxmization
-    max_rain
     total_precipitation
     storm_selection
     get_max_persisting_dew

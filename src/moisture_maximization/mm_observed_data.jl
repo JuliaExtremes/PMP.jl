@@ -1,98 +1,53 @@
-function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime})
-    
-    df1 = DataFrame(Date = date, Rain = rain)
-    storm = DataFrame(df1[1, :])
-
-    for i in 2:length(df1.Rain)
-        date_dif = Hour(abs(df1.date[i] - storm.date[1]))
-        event = DataFrame(df1[i, :])
-
-        if date_dif < Hour(nb)
-            df2 = append!(event, DataFrame(storm[1, :]))
-            event = DataFrame(filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :])
-            deleteat!(storm, 1)
-        end
-        
-        prepend!(storm, event)
-    end
-
-    sort!(storm)
-    return storm
-
-end
-
-function max_rain(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d24::Bool)
-    
-    if d24
-        return max_rain(rain, date, nb)
-    end
-
-    df1 = DataFrame(Date = date, Rain = rain)
-    storm = DataFrame(df1[1, :])
-    
-    for i in 2:length(df1.Rain)
-        date_dif = abs(df1.date[i] - storm.Date[1])
-        event = DataFrame(df1[i, :])
-            
-        if date_dif < Day(nb)
-            df2 = append!(event, DataFrame(storm[1, :]))
-            event = DataFrame(filter(r -> r.Rain == maximum(df2.Rain), df2)[1, :])
-            deleteat!(storm, 1)
-        end
-            
-        prepend!(storm, event)
-    end
-    
-    sort!(storm)
-    return storm
-
-end
-
-max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date}) = max_rain(rain, Dates.DateTime.(date))
-max_rain(rain::Vector{<:Real}, date::Vector{Dates.Date} d24::Bool) = max_rain(rain, Dates.DateTime.(date), d24)
-
-
-
 """
-    total_precipitation(d1::Int, d2::Int=72, rain::Vector{<:Real}, date::Vector{Dates.DateTime})
+    total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int)
 
 Estimate the greatest precipitation taken over a given duration `d₁` on a longer duration `d₂`.
+
+`rain` and `date` should not contain missing data.
 """
-function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int=72)
+function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int)
 
     @assert d₁ <= d₂ "the second duration should be longer than the first one."
     @assert length(rain) == length(date) "the vectors of the rain data and the associated dates should be of the same length."
 
     nb = floor(Int, d₂/d₁) # window size
+
     rain_d₂ = RollingFunctions.rolling(sum, rain, nb)
+    size = length(rain_d₂)
+
+    df1 = DataFrame(Rain = rain_d₂, Date = date[1:size])
+    filter!(r -> r.Rain>0, df1)
+    sort!(df1, rev=true)
+    df1 = combine(groupby(df1, :Date), :Rain => maximum => :Rain)
+
+    storm = DataFrame(df1[1, :])
     
-    size_df1 = length(rain_d₂)
-    df1 = DataFrame(Date = date[1:size_df1], Rain = rain_d₂)
+    i = 1
+    n = length(df1.Rain)
     
-    storm = DataFrame()
+    while i < n
+        
+        df1.date_dif = Hour.(abs.(storm.Date[i] .- df1.Date))
+        
+        filter!(r -> r.date_dif >= Hour(d₂), df1)
+        select!(df1, :Date, :Rain)
+        
+        storm = storm[1:i, :]
+        append!(storm, df1)
+        
+        n = length(storm.Rain)
+        i += 1
+        
+        df1 = storm[i:end, :]
 
-    for i in 1:nb:(size_df1-nb+1)
-        event = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[i:i+nb-1]), df1[i:i+nb-1, :])[1, :])
-        append!(storm, event)
-    end
-    for i in (size_df1-nb+1):size_df1
-        event = DataFrame(filter(r -> r.Rain == maximum(df1.Rain[i:end]), df1[i:end, :])[1, :])
-        append!(storm, event)
-    end
-
-    filter!(r -> r.Rain>0, storm)
-
-    if d₁ < 24
-        storm = max_rain(storm.Rain, storm.Date)
-    else
-        storm = max_rain(storm.Rain, storm.Date, false)
-    end
-
+    end   
+    sort!(storm)
+    
     return storm
 
 end
 
-total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.Date}, d₁::Int, d₂::Int=72) = total_precipitation(rain, Dates.DateTime.(date), d₁, d₂)
+total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.Date}, d₁::Int, d₂::Int) = total_precipitation(rain, Dates.DateTime.(date), d₁::Int, d₂::Int)
 
 
 
@@ -120,6 +75,7 @@ function storm_selection(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, p::
         append!(storm, storm_max)
     end
     select!(storm, :Date, :Rain)
+    storm.Date = Date.(storm.Date)
     
     return storm
 

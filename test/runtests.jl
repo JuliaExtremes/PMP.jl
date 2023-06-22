@@ -1,6 +1,6 @@
 using PMP
 
-using Distributions, JLD2, SpecialFunctions, Test, CSV, DataFrames, Dates
+using Distributions, JLD2, SpecialFunctions, Test, CSV, DataFrames, Dates, RollingFunctions
 
 @testset "ExtendedExtremes.jl" begin
     include("distributions/pearsontype1.jl")
