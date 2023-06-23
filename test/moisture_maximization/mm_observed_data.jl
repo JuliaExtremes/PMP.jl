@@ -100,7 +100,7 @@ end
     @testset "Storm" begin
         storms = PMP.storm_maximization(rain, pw, date, pw_max)
 
-        @test pmp = maximum(storms.Maximized_Rain)    
+        @test maximum(storms.Maximized_Rain) == 130.07567567567565 
     end
 
     @testset "PMP" begin
