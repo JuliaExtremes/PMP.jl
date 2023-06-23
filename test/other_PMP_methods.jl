@@ -1,8 +1,8 @@
 
 @testset "Other PMP methods" begin
     
-    rain = load("test/data/mm_rain_data.jld2", "Rain")
-    date = load("test/data/mm_rain_data.jld2", "Date")
+    rain = load("data/mm_rain_data.jld2", "Rain")
+    date = load("data/mm_rain_data.jld2", "Date")
 
     # GEV
     @testset "PMP_GEV" begin
