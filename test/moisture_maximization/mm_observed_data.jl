@@ -57,7 +57,8 @@ end
 @testset "get_max_persisting_dew" begin
     dew = load("data/mm_dew_data.jld2", "Dew")
 
-    @test PMP.get_max_persisting_dew(dew, 12) == 6.4
+    @test PMP.get_max_persisting_dew(dew, 1, 12) == 6.4
+    @test PMP.get_max_persisting_dew(dew, 3, 24) == 9.0
 end
 
 

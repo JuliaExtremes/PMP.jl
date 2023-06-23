@@ -8,7 +8,7 @@ Estimate the greatest precipitation taken over a given duration `d₁` on a long
 function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, d₁::Int, d₂::Int)
 
     @assert d₁ <= d₂ "the second duration should be longer than the first one."
-    @assert length(rain) == length(date) "the vectors of the rain data and the associated dates should be of the same length."
+    @assert length(rain) == length(date) "the vectors of rain data and the associated dates should be of the same length."
 
     nb = floor(Int, d₂/d₁) # window size
 
@@ -87,22 +87,21 @@ storm_selection(rain::Vector{<:Real}, date::Vector{Dates.Date}, p::Real, d₁::I
 
 # Maximum persisting dewpoint
 """
-    get_max_persisting_dew(dew_hourly::Vector{<:Real}, time_int::Int=12)
+    get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
-Get the maximum persisting dew point of a storm.
+Get the maximum persisting dew point of a storm for which data are taken at a given frequency.
     
 The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all 
 observations during the period (2009, WMO).
 """
-function get_max_persisting_dew(dew_hourly::Vector{<:Real}, time_int::Int=12)
+function get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
-    persisting_dews = []
-    for k = 1:length(dew_hourly) - (time_int-1)
-        push!(persisting_dews, minimum(dew_hourly[k:k + (time_int-1)]))
-    end
+    nb = floor(Int, time_int/frequency) # window size
 
-    return maximum(persisting_dews)
-end # fonction pour une tempête (dew_hourly sont les données d'une tempête)
+    persisting_dews = maximum(RollingFunctions.rollmin(dew_hourly, nb))
+
+    return persisting_dews
+end
 
 
 
@@ -111,7 +110,7 @@ end # fonction pour une tempête (dew_hourly sont les données d'une tempête)
 
 Convert dew point observation in precipitable water (PW).
 
-The relation is given by the Table A.1.1 of the annexe of the "Manual on Estimation of Probable Maximum 
+The relation is given by the Table A.1.1 of the annex of the "Manual on Estimation of Probable Maximum 
 Precipitation (PMP)" (2009, WMO).
 """
 function dewpoint_to_PW(dew_data::Real)
