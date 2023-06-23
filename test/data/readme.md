@@ -18,3 +18,13 @@ Observed hourly dewpoint at station Montreal Trudeau from 2011-05-01-00:00 to 20
 ## mm_rain_data.csv
 
 Observed daily liquid precipitation at station Montreal Trudeau from months May to October of years 2011 and 2012.
+
+
+## mm_shortdata1.csv
+
+Short synthetic daily data of rain on 14 days
+
+
+# mm_shortdata2.csv
+
+Short synthetic data of rain on five days taken every 3 hours

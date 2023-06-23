@@ -91,14 +91,21 @@ end
 
 
 
-@testset "PMP_mm" begin
-    rain = load("data/mm_rain_data.jld2", "Rain")[10660:end]
-    date = load("data/mm_rain_data.jld2", "Date")[10660:end]
-    pw = load("data/mm_pw_data.jld2", "PW")[10673:end]
+@testset "Storm maximization" begin
+    rain = load("test/data/mm_rain_data.jld2", "Rain")[10660:end]
+    date = load("test/data/mm_rain_data.jld2", "Date")[10660:end]
+    pw = load("test/data/mm_pw_data.jld2", "PW")[10673:end]
     pw_max = PMP.PW_max(pw, date).PW_max
 
-    PMPa, PMPb, storms = PMP.PMP_mm(rain, pw, date, pw_max)
+    @testset "Storm" begin
+        storms = PMP.storm_maximization(rain, pw, date, pw_max)
 
-    @test PMPa == 130.07567567567565
-    @test PMPb == 112.8
+        @test pmp = maximum(storms.Maximized_Rain)    
+    end
+
+    @testset "PMP" begin
+        pmp = PMP.PMP_mm(rain, pw, date, pw_max)
+        
+        @test pmp == 130.07567567567565
+    end
 end

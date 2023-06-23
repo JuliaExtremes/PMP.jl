@@ -23,7 +23,7 @@ function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime},
     storm = DataFrame(df1[1, :])
     
     i = 1
-    n = length(df1.Rain)
+    n = nrow(df1)
     
     while i < n
         
@@ -35,7 +35,7 @@ function total_precipitation(rain::Vector{<:Real}, date::Vector{Dates.DateTime},
         storm = storm[1:i, :]
         append!(storm, df1)
         
-        n = length(storm.Rain)
+        n = nrow(storm)
         i += 1
         
         df1 = storm[i:end, :]
@@ -65,15 +65,17 @@ function storm_selection(rain::Vector{<:Real}, date::Vector{Dates.DateTime}, p::
     df1.Year = Dates.year.(df1.Date)
     
     nYear = df1.Year[end] - df1.Year[1] + 1
+    storm_year = groupby(df1, :Year)
     storm = DataFrame() 
     
     for i in 1:nYear
-        storm_year = groupby(df1, :Year)[i]
-        nStormMax = floor(Int, p*length(storm_year.Rain)) + 1
-        
-        storm_max = sort(storm_year, :Rain, rev=true)[1:nStormMax, :]
+
+        nStormMax = floor(Int, p*nrow(storm_year[i])) + 1
+        storm_max = sort(storm_year[i], :Rain, rev=true)[1:nStormMax, :]
         append!(storm, storm_max)
+
     end
+    
     select!(storm, :Date, :Rain)
     storm.Date = Date.(storm.Date)
     
@@ -101,10 +103,12 @@ function get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time
     persisting_dews = maximum(RollingFunctions.rollmin(dew_hourly, nb))
 
     return persisting_dews
+
 end
 
 
 
+# Dew point to PW
 """
     dewpoint_to_PW(dew_data::Real)
 
@@ -132,6 +136,7 @@ function dewpoint_to_PW(dew_data::Real)
     pw_data = (dew_data - floor(dew_data)) * (upper_point - lower_point) + lower_point
     
     return pw_data
+
 end
 
 
@@ -149,7 +154,9 @@ function PW_max(pw_storm::Vector{<:Real}, date::Vector{Dates.Date})
     PW_max = combine(groupby(df, :Month), :PW => maximum => :PW_max)
     
     return PW_max
+
 end
+
 
 
 """
@@ -161,17 +168,21 @@ function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Dates.Date}, re
     
     ym = Dates.yearmonth.(date)
     month = Dates.month.(date)
-    df = DataFrame(PW = pw_storm, YM = ym, Month = month)
-    PW_month = combine(groupby(df, :YM), :PW => maximum => :PW, :Month => :Month)
-    ind = combine(groupby(df, :Month), :PW => maximum => :PW)
+    df1 = DataFrame(PW = pw_storm, YM = ym, Month = month)
     
-    PW_rp = DataFrame()
+    PW_month = combine(groupby(df1, :YM), :PW => maximum => :PW, :Month => :Month)
+    ind = combine(groupby(df1, :Month), :PW => maximum => :PW)
+    
+    PW_rp = DataFrame(Month = Int[], PW_rp = Float64[])
+    
     for i in ind.Month
-        df = filter(:Month => ==(i), PW_month)
-        pw_rp_month = DataFrame(Month = i, PW_rp = returnlevel(gevfit(df, :PW), return_period).value[1])
+
+        df2 = filter(:Month => ==(i), PW_month)
+        pw_rp_month = DataFrame(Month = i, PW_rp = returnlevel(gevfit(df2, :PW), return_period).value)
         append!(PW_rp, pw_rp_month)
+
     end 
-# x1.2 
+ 
     return PW_rp
 end
 
@@ -179,24 +190,38 @@ end
 
 # Storm maximization
 """
-Estimation of the maximization ratio, effective precipitation, maximized storm and PMP (moisture maximization method).
+    storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
+
+Estimation of the maximization ratio, effective precipitation and maximized precipitation.
 """
-function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
-    months = Dates.month.(date_storm) 
+function storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
+
+    months = Dates.month.(date_storm)
     storm = DataFrame(Rain = rain_storm, PW = pw_storm, PW_max = pw_max[months .- (minimum(months)-1)])
 
-    storm.EP = storm.Rain ./ storm.PW
+    EP = rain_storm ./ pw_storm
+    maximization_ratio = pw_max[months .- (minimum(months)-1)] ./ pw_storm
 
-    storm.maximization_ratio = storm.PW_max ./ storm.PW
-    storm.bounded_maximization_ratio = min.(2, storm.maximization_ratio)
+    maximized_rain = rain_storm .* maximization_ratio
 
-    storm.maximized_rain = storm.Rain .* storm.maximization_ratio
-    storm.bounded_maximized_rain = storm.Rain .* storm.bounded_maximization_ratio
+    storm = DataFrame(Date = date_storm, MR = maximization_ratio, EP = EP, Maximized_Rain = maximized_rain)
 
-    return maximum(storm.maximized_rain), maximum(storm.bounded_maximized_rain), storm
+    return storm
+
 end
 
-# j'aimerais diviser cette fonction en deux : une fonction de maximisation des tempetes qui retourne un dataframe 
-# contenant toutes les tempetes maximisees et une seconde qui retourne la PMP (devrait-on seulement retourner 
-# l'evenement associe a la PMP sans toutes les tempetes ?)
-# modifier pour le ratio de maximisation borne 
+
+
+# PMP_mm
+"""
+    PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
+
+Estimation of the PMP by moisture maximization.
+"""
+function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Dates.Date}, pw_max::Vector{<:Real})
+    
+    storm = PMP.storm_maximization(rain_storm, pw_storm, date_storm, pw_max)
+
+    return maximum(storm.Maximized_Rain)
+
+end
