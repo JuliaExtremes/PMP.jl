@@ -4,5 +4,6 @@ using Distributions, JLD2, SpecialFunctions, Test, CSV, DataFrames, Dates, Rolli
 
 @testset "ExtendedExtremes.jl" begin
     include("distributions/pearsontype1.jl")
-    include("moisture_maximization/mm_observed_data.jl")
+    include("moisture_maximization.jl")
+    include("other_PMP_methods.jl")
 end;

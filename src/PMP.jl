@@ -17,7 +17,7 @@ import Extremes: getcluster, returnlevel
 # distributions
 include("distributions/pearsontype1.jl");
 
-include("moisture_maximization/mm_observed_data.jl");
+include("moisture_maximization.jl");
 
 include("other_PMP_methods.jl");
 
