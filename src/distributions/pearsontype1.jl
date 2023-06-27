@@ -169,9 +169,8 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     kk = kurtosis(y) + 3 # not excess kurtosis
 
     # the kurtosis is bounded below by the squared skewness plus 1
-    # est-ce qu'on doit tester ?
     if ss^2 > kk-1 
-        return("There are no probability distributions with these moments") # changer pour @warn ? @error pour arreter la fct
+        @error "There are no probability distributions with these moments" 
     end
 
     aa = 2*kk - 3*ss^2 - 6
