@@ -108,7 +108,7 @@ end
 
 
 
-# Dew point to PW
+# Dewpoint to PW
 """
     dewpoint_to_PW(dew_data::Real)
 
