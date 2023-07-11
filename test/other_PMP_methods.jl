@@ -6,18 +6,14 @@
 
     # GEV
     @testset "PMP_GEV" begin
-        PMP = PMP.PMP_GEV(rain, date, 100000)
-
-        @test PMP[1] == 200.60269271773075
+        @test PMP.PMP_GEV(rain, date, 100000) == 200.60269271773075
     end
 
     # Hershfield
-    @testset "PMP_Hershfield" begin
-        PMPk = PMP.PMP_Hershfield(rain, date, 15)
-        PMPsk = PMP.PMP_Hershfield(rain, date)
-        
-        @test PMPk == 265.8582209143689
-        @test PMPsk[1] == 84.41003515317207
+    @testset "PMP_Hershfield" begin        
+        @test PMP.PMP_Hershfield(rain, date, 15) ≈ 265.85822091436887
+        @test PMP.PMP_Hershfield(rain, date)[1] == 84.41003515317207
     end
+
 end
 

@@ -1,9 +1,7 @@
 """
     PearsonType1(a,b,α,β)
 
-The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`) has the probability density
-function for ``a<y<b``
-
+The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (`a`, `b`) has the probability density function for ``a<y<b``
 ```math
 f(y; a, b, \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} \\frac{(y-a)^{\\alpha-1} (b-y)^{\\beta-1}}{(b-a)^{\\alpha+\\beta-1}},
 ```
@@ -146,9 +144,8 @@ function kurtosis(pd::PearsonType1, correction::Bool) # kurtosis
     td = getdistribution(pd)
     if correction
         return kurtosis(td)
-    else
-        return kurtosis(td) + 3.0
     end
+    return kurtosis(td) + 3.0
 end
 
 function entropy(pd::PearsonType1)
@@ -164,15 +161,18 @@ end
 
 
 # fit by method of moments
-
-function fit_mme(y::Vector{<:Real})
+function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # sample moments
     mm = mean(y)
     vv = var(y)
     ss = skewness(y)
-    kk = kurtosis(y) + 3 # kurtosis
+    kk = kurtosis(y) + 3 # not excess kurtosis
 
-    # verifier les conditions (skewness et kurtosis) pour une Pearson type 1 et une Pearson en général
+    # the kurtosis is bounded below by the squared skewness plus 1
+    if ss^2 > kk-1 
+        @error "There are no probability distributions with these moments" 
+    end
+
     aa = 2*kk - 3*ss^2 - 6
     bb = ss*(kk + 3)
     cc = 4*kk - 3*ss^2
@@ -195,7 +195,7 @@ function fit_mme(y::Vector{<:Real})
     α = m1 + 1
     β = m2 + 1
 
-    return a, b, α, β
+    return PearsonType1(a, b, α, β)
 end
 
 
@@ -203,7 +203,16 @@ end
 # fit by maximum likelihood 
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
-    
+ 
+    # PearsonDS propose de +-0.1 aux valeurs initiales
+    if initialvalues[2] > 0
+        initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
+        initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
+    else
+        initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
+        initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
+    end 
+
     loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
 
     fobj(θ) = -loglike(θ)
@@ -218,14 +227,13 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
     end
     
     return PearsonType1(θ̂...)
-    
 end
 
+# ne fonctionne pas : erreur 
+# MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
-
-    # TODO Replace initial values with the estimations obtained with th method of moments.
-    initialvalues = [minimum(y), maximum(y), 1., 1.]
     
-    return fit_mle(pd, y, initialvalues)
+    initialvalues = PMP.fit_mme(PearsonType1, y)
     
+    return PMP.fit_mle(pd, y, initialvalues)  # retour un PearsonType1 
 end
