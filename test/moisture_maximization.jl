@@ -32,22 +32,25 @@ end
     date = load("data/mm_rain_data.jld2", "Date")
 
     storm_a = PMP.storm_selection(rain, date, 0.1, 24, 72)
+    storm_b = PMP.storm_selection(rain, date, 0.1)
 
     @testset "1953-2012" begin
-        storm_b = PMP.storm_selection(rain, date, 0.1, 24)
+        storm_c = PMP.storm_selection(rain, date, 0.1, 24)
+        storm_d = PMP.storm_selection(rain, date, 0.1)
 
-        @test storm_a == storm_b
+        @test storm_a == storm_c
+        @test storm_b == storm_d
         @test maximum(storm_a.Rain) == 99.5
     end
 
     @testset "1996" begin
         data1996 = filter(r -> Dates.Year.(r.date) == Year(1996), DataFrames.DataFrame(date = date, rain = rain))
 
-        storm_c = filter(r -> Dates.Year.(r.Date) == Year(1996), storm_a)
+        storm_e = filter(r -> Dates.Year.(r.Date) == Year(1996), storm_a)
         precip1996 = PMP.total_precipitation(data1996.rain, data1996.date, 24, 72)
 
-        @test length(storm_c.Rain) == floor(Int, length(precip1996.Rain)/10)+1
-        @test maximum(storm_c.Rain) == maximum(precip1996.Rain)
+        @test length(storm_e.Rain) == floor(Int, length(precip1996.Rain)/10)+1
+        @test maximum(storm_e.Rain) == maximum(precip1996.Rain)
     end
 
 end
