@@ -134,7 +134,7 @@ end
 
 
 
-# Dew point to PW
+# Dewpoint to PW
 """
     dewpoint_to_PW(dew_data::Real)
 
@@ -184,7 +184,7 @@ function PW_max(pw_storm::Vector{<:Real}, date::Vector{DateTime})
 end
 
 PW_max(pw_storm::Vector{<:Real}, date::Vector{Date}) = PW_max(pw_storm, DateTime.(date))
-
+  
 
 
 """
@@ -259,3 +259,4 @@ function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm
 end
 
 PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Date}, pw_max::Vector{<:Real}) = PMP_mm(rain_storm, pw_storm, DateTime.(date_storm), pw_max)
+

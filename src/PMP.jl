@@ -12,7 +12,7 @@ import Random
 
 import DataFrames
 
-import Extremes: getcluster, returnlevel
+import Extremes: returnlevel
 
 # distributions
 include("distributions/pearsontype1.jl");
@@ -60,6 +60,7 @@ export
     dewpoint_to_PW
     PW_max
     PW_return_period
+    storm_maximization
     PMP_mm
 
     # other PMP estimation methods
