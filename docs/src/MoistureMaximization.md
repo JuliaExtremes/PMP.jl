@@ -1,7 +1,7 @@
 
 # PMP estimation by moisture maximization 
 
-This example shows how to estimate 72h PMP by moisture maximization with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA). The example uses observed data of the Montréal-Trudeau station. To avoid solid precipitation, we only consider data from May to October and from 1953 to 2012. 
+This example shows how to estimate 72h PMP by moisture maximization with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA). The example uses observed data of the Montréal-Trudeau International Airport station. To avoid solid precipitation, we only consider data from May to October and from 1953 to 2012. 
 
 ## Load required Julia packages
 
@@ -16,21 +16,22 @@ Before executing this tutorial, make sure to have installed the following packag
 
 and import them using the following command:
  ```@repl stationary
-import Pkg; Pkg.add("DataFrames"), Pkg.add("Dates"), Pkg.add("Distributions")
 using CSV, DataFrames, Dates, Distributions
 using Extremes, PMP
 ```
 
-## Storm selection
+## Load required datasets
 
-First we need to select storms to be maximized. As we have observed daily precipitations (in mm) and the desired PMP is 72h, let ``d_1`` = 24 and ``d_2`` = 72.
-
-Loading the observed daily precipitations (in mm)
+Loading the observed daily precipitations (in mm) and observed hourly dew point (in °C)
 ```@example stationary
 # Load the data 
  
 println("") # hide
 ```
+
+## Storm selection
+
+First we need to select storms to be maximized. As we have observed daily precipitations (in mm) and the desired PMP is 72h, let ``d_1`` = 24 and ``d_2`` = 72.
 
 ## Precipitable water calculation
 
