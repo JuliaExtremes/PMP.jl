@@ -16,13 +16,14 @@ Before executing this tutorial, make sure to have installed the following packag
 
 and import them using the following command:
  ```@repl stationary
+import Pkg; Pkg.add("CSV"), Pkg.add("Extremes")
 using CSV, DataFrames, Dates, Distributions
 using Extremes, PMP
 ```
 
 ## Storm selection
 
-First we need to select storms to be maximized. As we have observed daily precipitations (in mm) and the desired PMP is 72h, let `d\_1` = 24 and `d\_2` = 72.
+First we need to select storms to be maximized. As we have observed daily precipitations (in mm) and the desired PMP is 72h, let `d_1` = 24 and `d_2` = 72.
 
 Loading the observed daily precipitations (in mm)
 ```@example stationary
