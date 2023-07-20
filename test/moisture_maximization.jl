@@ -5,7 +5,7 @@
         date1 = load("data/mm_shortdata1.jld2", "Date")
 
         storm_a = PMP.total_precipitation(rain1, date1, 24, 72)
-        storm_b = PMP.total_precipitation(rain1, Dates.DateTime.(date1), 24, 72)
+        storm_b = PMP.total_precipitation(rain1, DateTime.(date1), 24, 72)
 
         @test storm_a == storm_b
         @test length(storm_a.Rain) == 4
@@ -57,11 +57,21 @@ end
 
 
 
-@testset "get_max_persisting_dew" begin
-    dew = load("data/mm_dew_data.jld2", "Dew")
+@testset "storm dewpoint" begin
+    #@testset "equal_date" begin
+    #    storm_date = Date(2013,7,20)
 
-    @test PMP.get_max_persisting_dew(dew, 1, 12) == 6.4
-    @test PMP.get_max_persisting_dew(dew, 3, 24) == 9.0
+    #    @test PMP.equal_date(storm_date, Date(2013,7,20), 72)
+    #    @test PMP.equal_date(storm_date, Date(2013,7,22), 72)
+    #    @test PMP.equal_date(storm_date, Date(2013,7,23), 72) === nothing
+    #end
+
+    @testset "get_maximum_persisting_dew" begin
+        dew = load("data/mm_dew_data.jld2", "Dew")
+
+        @test PMP.get_max_persisting_dew(dew, 1, 12) == 6.4
+        @test PMP.get_max_persisting_dew(dew, 3, 24) == 9.0
+    end
 end
 
 

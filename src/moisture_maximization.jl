@@ -86,6 +86,7 @@ function storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real, 
     
     select!(storm, :Date, :Rain)
     storm.Date = Date.(storm.Date)
+    sort!(storm)
     
     return storm
 
@@ -121,21 +122,72 @@ storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real) = storm_selec
 
 
 
-# Maximum persisting dewpoint
+# Storm dewpoint
 """
-    get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+    get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
-Get the maximum persisting dew point of a storm for which data are taken at a given frequency.
+Get the maximum persisting dewpoint of a storm for which data are taken at a given frequency.
     
 The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all observations during the period ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
 """
-function get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+function get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
     nb = floor(Int, time_int/frequency) # window size
 
-    persisting_dews = maximum(RollingFunctions.rollmin(dew_hourly, nb))
+    persisting_dews = maximum(RollingFunctions.rollmin(dewpoint, nb))
 
     return persisting_dews
+
+end
+
+
+"""
+    equal_date(storm_date::Date, dewpoint_date::Date, d₂::Int)
+    equal_date(storm_date::DateTime, dewpoint_date::DateTime, d₂::Int)
+    equal_date(storm_date::DateTime, dewpoint_date::Date, d₂::Int)
+    equal_date(storm_date::Date, dewpoint_date::DateTime, d₂::Int)
+
+Determine if dewpoint and storm data belong to the same storm.
+
+function equal_date end
+
+function equal_date(storm_date::Date, dewpoint_date::Date, d₂::Int)
+
+    storm_duration = floor(Int, d₂/24 - 1)
+
+    for i in 1:storm_duration
+        if storm_date+Day(i) == dewpoint_date return true end
+    end
+
+    if storm_date == dewpoint_date return true end
+
+end
+
+#equal_date(storm_date::DateTime, dewpoint_date::DateTime, d₂::Int) = equal_date(Date(storm_date), Date(dewpoint_date), d₂)
+#equal_date(storm_date::Date, dewpoint_date::DateTime, d₂::Int) = equal_date(storm_date, Date(dewpoint_date), d₂)
+#equal_date(storm_date::DateTime, dewpoint_date::Date, d₂::Int) = equal_date(Date(storm_date), dewpoint_date, d₂)
+"""
+
+
+"""
+    storm_dewpoint(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+
+Get dewpoint for each storm.
+"""
+function storm_dewpoint(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+
+    storm_duration = floor(Int, d₂/24)
+    df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
+    
+    storm_dewpoint = DataFrame()
+
+    for i in storm_date
+
+        df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
+        event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dewpoint, frequency, time_int))
+        append!(storm_dewpoint, event)
+
+    end
 
 end
 

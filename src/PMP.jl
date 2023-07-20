@@ -57,6 +57,8 @@ export
     total_precipitation
     storm_selection
     get_max_persisting_dew
+    #equal_date
+    storm_dewpoint
     dewpoint_to_PW
     PW_max
     PW_return_period
