@@ -16,7 +16,6 @@ Before executing this tutorial, make sure to have installed the following packag
 
 and import them using the following command:
  ```@repl stationary
-import Pkg; Pkg.add("DataFrames"), Pkg.add("Dates"), Pkg.add("Distributions")
 using CSV, DataFrames, Dates, Distributions
 using Extremes, PMP
 ```
@@ -27,14 +26,14 @@ Loading the observed daily precipitations (in mm) and observed hourly dew point 
 ```@example stationary
 # Load the data
 rain = PMP.dataset("rain")
-dew = PMP.dataset("dew")
+dewpoint = PMP.dataset("dewpoint")
  
 println("") # hide
 ```
 
 ## Storm selection
 
-First we need to select storms to be maximized. We only want to maximize the 10\\% biggest storms of each year.
+First we need to select storms to be maximized. We only want to maximize the 10\% biggest storms of each year.
 
 ```@example stationary
 # Select "PMP magnitude" storms
@@ -54,10 +53,19 @@ d1 = 24    # frenquency of the observations
 d2 = 72    # duration of PMP
 
 rain_on_72h = PMP.total_precipitation(rain.rain, rain.date, d1, d2)
-storms = PMP.storm_selection(rain.rain, rain.date, p)
+storms = PMP.storm_selection(rain_on_72h.Rain, rain_on_72h.Date, p)
 println("") # hide
 ```
 
 ## Precipitable water calculation
+
+At Montréal-Trudeau International Airport station, we do not have access to precipitable water observations. We need to convert dewpoint (in °C) to precipitable water (in mm). However, as the dewpoint is measured hourly, we also need to determine which data will represent humidity for each storm. In its manual, the WMO has defined the highest persisting dewpoint for some specified time interval as "the value equalled or exceeded at all observations during the period". We will here use a 12h period as it is what recommended by the WMO and our time interval is the duration of each storm (72h). 
+
+We first need to select dewpoint data for each storms of magnitude PMP selected in the previous section
+```@example stationary
+storm_dewpoint = 
+
+println("") # hide
+```
 
 ## Maximization ratio and PMP estimation

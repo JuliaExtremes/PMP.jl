@@ -86,6 +86,7 @@ function storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real, 
     
     select!(storm, :Date, :Rain)
     storm.Date = Date.(storm.Date)
+    sort!(storm)
     
     return storm
 
@@ -123,17 +124,17 @@ storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real) = storm_selec
 
 # Maximum persisting dewpoint
 """
-    get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+    get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
-Get the maximum persisting dew point of a storm for which data are taken at a given frequency.
+Get the maximum persisting dewpoint of a storm for which data are taken at a given frequency.
     
 The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all observations during the period ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
 """
-function get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+function get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
     nb = floor(Int, time_int/frequency) # window size
 
-    persisting_dews = maximum(RollingFunctions.rollmin(dew_hourly, nb))
+    persisting_dews = maximum(RollingFunctions.rollmin(dewpoint, nb))
 
     return persisting_dews
 
@@ -171,6 +172,44 @@ function dewpoint_to_PW(dew_data::Real)
     return pw_data
 
 end
+
+
+
+# Storm PW
+"""
+    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+
+Get the precipitable water for each storm.
+"""
+function storm_PW end
+
+function storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+
+    storm_duration = floor(Int, d₂/24)
+    df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
+    
+    storm_pw = DataFrame()
+
+    for i in storm_date
+
+        df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
+        event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dew, frequency, time_int))
+        event.PW = dewpoint_to_PW.(event.Dew)
+        append!(storm_pw, event)
+
+    end
+
+    return storm_pw
+
+end
+
+storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, dewpoint_date, d₂, frequency, time_int)
+storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(storm_date, dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+
 
 
 
