@@ -69,15 +69,13 @@ end
     @testset "dewpoint_to_PW" begin
         @test PMP.dewpoint_to_PW(-10) == 8
         @test PMP.dewpoint_to_PW(33) == 123
-        @test PMP.dewpoint_to_PW(10.5) == 22
+        @test PMP.dewpoint_to_PW(6.4) == 15.4
     end
 
     @testset "storm_PW" begin
-        storm = PMP.storm_PW([date[1]], dew, date, 48, 1, 12)
-
-        @test storm.Dew[] == 6.4
-        @test storm.PW[] == 15.4
-        @test Date(storm.Date[]) == date[1]
+        @test PMP.storm_PW([date[1]], dew, DateTime.(date), 48, 1, 12).Dew[] == 6.4
+        @test PMP.storm_PW([date[1]], dew, date, 48, 1, 12).PW[] == 15.4
+        @test Date(PMP.storm_PW(DateTime.([date[1]]), dew, date, 48, 1, 12).Date[]) == date[1]
     end
 end
 

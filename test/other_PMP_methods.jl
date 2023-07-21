@@ -15,6 +15,7 @@
         @test PMP.PMP_Hershfield(rain, date, 15, 24, 24) ≈ 265.85822091436887  
         @test PMP.PMP_Hershfield(rain, date, 15) ≈ 265.85822091436887
         @test PMP.PMP_Hershfield(rain, date, 24, 24)[1] == 84.41003515317207
+        @test PMP.PMP_Hershfield(rain, date)[1] == 84.41003515317207
     end
 
 end

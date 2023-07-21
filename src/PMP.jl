@@ -17,9 +17,12 @@ import Extremes: returnlevel
 # distributions
 include("distributions/pearsontype1.jl");
 
+# usual PMP 
 include("moisture_maximization.jl");
-
 include("other_PMP_methods.jl");
+
+# documentation example
+include("data_example.jl");
 
 export
     # distribution types
@@ -67,5 +70,8 @@ export
     # other PMP estimation methods
     PMP_GEV
     PMP_Hershfield
+
+    # dataset
+    dataset
 
 end # module PMP
