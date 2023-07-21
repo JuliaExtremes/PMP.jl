@@ -57,35 +57,34 @@ end
 
 
 
-@testset "storm dewpoint" begin
-    #@testset "equal_date" begin
-    #    storm_date = Date(2013,7,20)
-
-    #    @test PMP.equal_date(storm_date, Date(2013,7,20), 72)
-    #    @test PMP.equal_date(storm_date, Date(2013,7,22), 72)
-    #    @test PMP.equal_date(storm_date, Date(2013,7,23), 72) === nothing
-    #end
+@testset "storm PW" begin
+    dew = load("data/mm_dew_data.jld2", "Dew")
+    date = load("data/mm_dew_data.jld2", "Date")
 
     @testset "get_maximum_persisting_dew" begin
-        dew = load("data/mm_dew_data.jld2", "Dew")
+        @test PMP.get_max_persisting_dew(dew[1:48], 1, 12) == 6.4
+        @test PMP.get_max_persisting_dew(dew[1:48], 3, 24) == 9.0
+    end
 
-        @test PMP.get_max_persisting_dew(dew, 1, 12) == 6.4
-        @test PMP.get_max_persisting_dew(dew, 3, 24) == 9.0
+    @testset "dewpoint_to_PW" begin
+        @test PMP.dewpoint_to_PW(-10) == 8
+        @test PMP.dewpoint_to_PW(33) == 123
+        @test PMP.dewpoint_to_PW(10.5) == 22
+    end
+
+    @testset "storm_PW" begin
+        storm = PMP.storm_PW([date[1]], dew, date, 48, 1, 12)
+
+        @test storm.Dew[] == 6.4
+        @test storm.PW[] == 15.4
+        @test Date(storm.Date[]) == date[1]
     end
 end
 
 
 
-@testset "dewpoint_to_PW" begin
-    @test PMP.dewpoint_to_PW(-10) == 8
-    @test PMP.dewpoint_to_PW(33) == 123
-    @test PMP.dewpoint_to_PW(10.5) == 22
-end
-
-
-
 @testset "Maximum precipitable water" begin
-    
+
     pw = load("data/mm_pw_data.jld2", "PW")
     date = load("data/mm_pw_data.jld2", "Date")
     

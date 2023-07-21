@@ -122,7 +122,7 @@ storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real) = storm_selec
 
 
 
-# Storm dewpoint
+# Maximum persisting dewpoint
 """
     get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
@@ -137,57 +137,6 @@ function get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_i
     persisting_dews = maximum(RollingFunctions.rollmin(dewpoint, nb))
 
     return persisting_dews
-
-end
-
-
-"""
-    equal_date(storm_date::Date, dewpoint_date::Date, d₂::Int)
-    equal_date(storm_date::DateTime, dewpoint_date::DateTime, d₂::Int)
-    equal_date(storm_date::DateTime, dewpoint_date::Date, d₂::Int)
-    equal_date(storm_date::Date, dewpoint_date::DateTime, d₂::Int)
-
-Determine if dewpoint and storm data belong to the same storm.
-
-function equal_date end
-
-function equal_date(storm_date::Date, dewpoint_date::Date, d₂::Int)
-
-    storm_duration = floor(Int, d₂/24 - 1)
-
-    for i in 1:storm_duration
-        if storm_date+Day(i) == dewpoint_date return true end
-    end
-
-    if storm_date == dewpoint_date return true end
-
-end
-
-#equal_date(storm_date::DateTime, dewpoint_date::DateTime, d₂::Int) = equal_date(Date(storm_date), Date(dewpoint_date), d₂)
-#equal_date(storm_date::Date, dewpoint_date::DateTime, d₂::Int) = equal_date(storm_date, Date(dewpoint_date), d₂)
-#equal_date(storm_date::DateTime, dewpoint_date::Date, d₂::Int) = equal_date(Date(storm_date), dewpoint_date, d₂)
-"""
-
-
-"""
-    storm_dewpoint(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
-
-Get dewpoint for each storm.
-"""
-function storm_dewpoint(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
-
-    storm_duration = floor(Int, d₂/24)
-    df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
-    
-    storm_dewpoint = DataFrame()
-
-    for i in storm_date
-
-        df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
-        event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dewpoint, frequency, time_int))
-        append!(storm_dewpoint, event)
-
-    end
 
 end
 
@@ -223,6 +172,44 @@ function dewpoint_to_PW(dew_data::Real)
     return pw_data
 
 end
+
+
+
+# Storm PW
+"""
+    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+
+Get the precipitable water for each storm.
+"""
+function storm_PW end
+
+function storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+
+    storm_duration = floor(Int, d₂/24)
+    df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
+    
+    storm_pw = DataFrame()
+
+    for i in storm_date
+
+        df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
+        event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dew, frequency, time_int))
+        event.PW = dewpoint_to_PW.(event.Dew)
+        append!(storm_pw, event)
+
+    end
+
+    return storm_pw
+
+end
+
+storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, dewpoint_date, d₂, frequency, time_int)
+storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(storm_date, dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+
 
 
 
