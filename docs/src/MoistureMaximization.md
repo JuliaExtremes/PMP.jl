@@ -41,7 +41,7 @@ p = 0.1    # 10%
 d1 = 24    # frenquency of the observations
 d2 = 72    # duration of PMP
 
-storms = PMP.storm_selection(rain.rain, rain.date, p, d1, d2)
+storms = PMP.storm_selection(rain.Rain, rain.Date, p, d1, d2)
 println("") # hide
 ```
 
@@ -52,7 +52,7 @@ p = 0.1    # 10%
 d1 = 24    # frenquency of the observations
 d2 = 72    # duration of PMP
 
-rain_on_72h = PMP.total_precipitation(rain.rain, rain.date, d1, d2)
+rain_on_72h = PMP.total_precipitation(rain.Rain, rain.Date, d1, d2)
 storms = PMP.storm_selection(rain_on_72h.Rain, rain_on_72h.Date, p)
 println("") # hide
 ```
