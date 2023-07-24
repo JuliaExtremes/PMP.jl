@@ -191,18 +191,18 @@ function storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoi
     storm_duration = floor(Int, d₂/24)
     df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
     
-    storm_pw = DataFrame()
+    pw_storm = DataFrame()
 
     for i in storm_date
 
         df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
         event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dew, frequency, time_int))
         event.PW = dewpoint_to_PW.(event.Dew)
-        append!(storm_pw, event)
+        append!(pw_storm, event)
 
     end
 
-    return storm_pw
+    return pw_storm
 
 end
 
@@ -215,40 +215,40 @@ storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::
 
 # Maximum precipitable water 
 """
-    PW_max(pw_storm::Vector{<:Real}, date::Vector{DateTime})
-    PW_max(pw_storm::Vector{<:Real}, date::Vector{Date})
+    PW_max(pw::Vector{<:Real}, date::Vector{DateTime})
+    PW_max(pw::Vector{<:Real}, date::Vector{Date})
 
 Estimate the maximum precipitable water for each month of interest.
 """
 function PW_max end
 
-function PW_max(pw_storm::Vector{<:Real}, date::Vector{DateTime})
+function PW_max(pw::Vector{<:Real}, date::Vector{DateTime})
     
     month = Dates.month.(date)
-    df = DataFrame(PW = pw_storm, Month = month)
+    df = DataFrame(PW = pw, Month = month)
     PW_max = combine(groupby(df, :Month), :PW => maximum => :PW_max)
     
     return PW_max
 
 end
 
-PW_max(pw_storm::Vector{<:Real}, date::Vector{Date}) = PW_max(pw_storm, DateTime.(date))
+PW_max(pw::Vector{<:Real}, date::Vector{Date}) = PW_max(pw, DateTime.(date))
   
 
 
 """
-    PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
-    PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Date}, return_period::Int=100)
+    PW_return_period(pw::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
+    PW_return_period(pw::Vector{<:Real}, date::Vector{Date}, return_period::Int=100)
 
 Estimate the precipitable water return value for each month of interest for a given return period.
 """
 function PW_return_period end
 
-function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
+function PW_return_period(pw::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
     
     ym = Dates.yearmonth.(date)
     month = Dates.month.(date)
-    df1 = DataFrame(PW = pw_storm, YM = ym, Month = month)
+    df1 = DataFrame(PW = pw, YM = ym, Month = month)
     
     PW_month = combine(groupby(df1, :YM), :PW => maximum => :PW, :Month => :Month)
     ind = combine(groupby(df1, :Month), :PW => maximum => :PW)
@@ -266,7 +266,7 @@ function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, retu
     return PW_rp
 end
 
-PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Date}, return_period::Int=100) = PW_return_period(pw_storm, DateTime.(date), return_period)
+PW_return_period(pw::Vector{<:Real}, date::Vector{Date}, return_period::Int=100) = PW_return_period(pw, DateTime.(date), return_period)
 
 
 
