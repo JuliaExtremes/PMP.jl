@@ -9,6 +9,7 @@ makedocs(sitename = "PMP.jl",
     pages = [
        "GettingStarted.md",
        "MoistureMaximization.md",
+       "OtherMethods.md",
        "index.md"]
 )
 
