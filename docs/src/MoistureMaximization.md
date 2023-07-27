@@ -33,7 +33,7 @@ dewpoint = PMP.dataset("dewpoint")
 println("") # hide
 ```
 
-
+---
 ## Storm selection
 
 First, we need to select storms for maximization. We want to focus on maximizing the 10% largest precipitation event of each year.
@@ -41,22 +41,25 @@ First, we need to select storms for maximization. We want to focus on maximizing
 ```@example stationary
 # Select "PMP magnitude" storms
 p = 0.1    # 10% 
-d1 = 24    # frenquency of the observations
-d2 = 72    # duration of PMP
+d1 = 24    # One observation per day
+d2 = 72    # PMP duration
 
-storm = PMP.storm_selection(rain.Rain, rain.Date, p, d1, d2)
+storm = storm_selection(rain.Rain, rain.Date, p, d1, d2)
 println("") # hide
 ```
 
-We also could have used `total_precipitation` and then `storm_selection` as follow :
+We also could have used `total_precipitation` then `storm_selection` as follow :
 
 ```@example stationary
-rain_on_72h = PMP.total_precipitation(rain.Rain, rain.Date, d1, d2)
-storm = PMP.storm_selection(rain_on_72h.Rain, rain_on_72h.Date, p)
+# Aggregate precipitations of duration d1 to precipitations of duration d2 without overlap
+rain_on_72h = total_precipitation(rain.Rain, rain.Date, d1, d2)
+
+# Select the p greatest storms of each year
+storm = storm_selection(rain_on_72h.Rain, rain_on_72h.Date, p)
 println("") # hide
 ```
 
-
+---
 ## Precipitable water calculation
 
 At Montréal-Trudeau International Airport station, we do not have direct access to precipitable water (PW) observations; instead, we need to convert dewpoint (in °C) to PW (in mm). The dewpoint is measured hourly, and the highest persisting dewpoint represents the data that best characterizes the humidity for each storm. According to the WMO manual, the persisting dewpoint for a specified time interval is defined as 'the value equalled or exceeded at all observations during the period.' For our purposes, we will use 12-hour time intervals, as recommended by the WMO. Furthermore, we are specifically interested in dewpoint observations taken during the PMP magnitude storms determined in the previous section. Accordingly, we need to select those relevant observation from the dewpoint dataset. 
@@ -64,21 +67,25 @@ At Montréal-Trudeau International Airport station, we do not have direct access
 The `storm_PW` function utilizes storm dates, the dewpoint dataset, PMP duration, dewpoint observation frequency, and the selected time interval for persisting dewpoint to return the PW of each storm of interest.
 
 ```@example stationary
-pw_storm = storm_PW(storm.Date, dewpoint.Dew, dewpoint.DateTime, 72, 1, 12)
+obs_freq = 1     # One observation per hour
+time_int = 12    # Keep the smallest observation on each moving window of size 12h
+
+# Calculate appropriate pw for each storm
+pw_storm = storm_PW(storm.Date, dewpoint.Dew, dewpoint.DateTime, d2, obs_freq, time_int)
 println("") # hide
 ```
 
 If the dewpoint dataset contains observations associated only with the storms of interest, it is possible to use `get_max_persisting_dew` followed by `dewpoint_to_PW` to calculate the PW for each precipitation event. Some methods ([Beauchamp *et al.*, 2013](https://doi.org/10.1002/wrcr.20336), [Rousseau *et al.*, 2014](https://doi.org/10.1016/j.jhydrol.2014.10.053)) suggest using humidity data from before the event in addition to the observations taken during the storm. Hence, it could be appropriate to either utilize these two functions or modify `storm_PW` to take those data into consideration.
 
-
+---
 ## Maximization ratio and PMP estimation
 
-To maximize the PMP magnitude storms, the precipitation has to be multiplied by the maximization ratio (MR), which is defined by ``\\frac{PW_{max}}{PW_{storm}}``. ``PW_{max}`` can be the maximum precipitable water recorded during the month of the event of the entire dataset or the return value for a given return period for the month of the event. We calculate both fot all the months of interest (May to October): 
+To maximize the PMP magnitude storms, the precipitation has to be multiplied by the maximization ratio (MR), which is defined by ``\frac{PW_{max}}{PW_{storm}}``. ``PW_{max}`` can be the maximum precipitable water recorded during the month of the event of the entire dataset or the return value for a given return period for the month of the event. We calculate both fot all the months of interest (May to October): 
 
 ```@example stationary
-# pw dataset construction
+# PW dataset construction
 pw_dataset = DataFrame(Date = dewpoint.DateTime)
-pw_dataset.PW = dewpoint_to_PW.(dewpoint.Dew)
+pw_dataset.PW = PMP.dewpoint_to_PW.(dewpoint.Dew)
 
 pw_max = PW_max(pw_dataset.PW, pw_dataset.Date)                  # PW max
 pw_100 = PW_return_period(pw_dataset.PW, pw_dataset.Date, 100)   # PW 100
@@ -89,16 +96,16 @@ println("") # hide
 If we want information (date, maximization ratio, effective precipitation (EP) and maximized rain) on all the maximized storms, we can call the `storm_maximization` function : 
 
 ```@example stationary
-maximized_storm_PW_max = storm_maximization(storm.Rain, pw_storm.PW, storm.Date, pw_max)
-maximized_storm_PW_100 = storm_maximization(storm.Rain, pw_storm.PW, storm.Date, pw_100)
+maximized_storm_PW_max = storm_maximization(storm.Rain, pw_storm.PW, storm.Date, pw_max.PW_max)
+maximized_storm_PW_100 = storm_maximization(storm.Rain, pw_storm.PW, storm.Date, pw_100.PW_rp)
 println("") # hide
 ```
 
-Alternatively, we could exclusively estimate the PMP as follows :
+Alternatively, we could exclusively estimate the PMP for each month as follows :
 
 ```@example stationary
-PMP_max = PMP_mm(storm.Rain, pw_storm.PW, storm.Date, pw_max)
-PMP_100 = PMP_mm(storm.Rain, pw_storm.PW, storm.Date, pw_100)
+PMP_max = PMP_mm(storm.Rain, pw_storm.PW, storm.Date, pw_max.PW_max)
+PMP_100 = PMP_mm(storm.Rain, pw_storm.PW, storm.Date, pw_100.PW_rp)
 println("") # hide
 ```
 
