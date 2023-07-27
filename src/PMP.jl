@@ -49,29 +49,26 @@ export
     mode, 
     skewness,
     kurtosis, 
-    entropy
+    entropy,
 
     # distribution fitting
-    fit_mme
+    fit_mme,
     #fit_mle
     #fit_bayes
 
     # moisture maxmization
-    total_precipitation
-    storm_selection
-    get_max_persisting_dew
-    dewpoint_to_PW
-    storm_PW
-    PW_max
-    PW_return_period
-    storm_maximization
-    PMP_mm
+    total_precipitation,
+    storm_selection,
+    get_max_persisting_dew,
+    dewpoint_to_PW,
+    storm_PW,
+    PW_max,
+    PW_return_period,
+    storm_maximization,
+    PMP_mm,
 
     # other PMP estimation methods
-    PMP_GEV
+    PMP_GEV,
     PMP_Hershfield
-
-    # dataset
-    dataset
 
 end # module PMP

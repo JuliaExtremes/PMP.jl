@@ -136,7 +136,7 @@ end
 #    y = load("data/persontype1_sample.jld2", "y")
 #    fd = PMP.fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 1.])
     
-#    @test minimum(fd) ≈ -1. atol=0.01
+ #   @test minimum(fd) ≈ -1. atol=0.01
 #    @test maximum(fd) ≈ 1. atol=0.05
 #    @test shape(fd)[1] ≈ 2. atol=.1
 #    @test shape(fd)[2] ≈ 3. atol=.3
