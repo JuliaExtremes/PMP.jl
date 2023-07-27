@@ -2,9 +2,9 @@
     total_precipitation(rain::Vector{<:Real}, date::Vector{DateTime}, d₁::Int, d₂::Int)
     total_precipitation(rain::Vector{<:Real}, date::Vector{Date}, d₁::Int, d₂::Int)
 
-Estimate the greatest precipitation taken over a given duration `d₁` on a longer duration `d₂`.
+Estimate the greatest precipitations taken over a given duration `d₁` on a longer duration `d₂`.
 
-The function choose the greatest precipitation of duration `d₂` while avoiding taking the same observation twice. Datasets `rain` and `date` should not contain missing data. 
+The function choose the greatest precipitations of duration `d₂` while avoiding overlap. Datasets `rain` and `date` should not contain missing data. 
 """
 function total_precipitation end
 
@@ -61,7 +61,9 @@ total_precipitation(rain::Vector{<:Real}, date::Vector{Date}, d₁::Int, d₂::I
     storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real)
     storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real)
 
-Select storms of duration `d₂` to be maximized from data of duration `d₁`. 
+Select the PMP magnitude storms of each year.
+
+The function choose the greatest precipitations of duration `d₂` from data of duration `d₁` while avoiding overlap. The function then select the p (a proportion) greatest storm of each year to be maximized.
 """
 function storm_selection end
 
@@ -148,8 +150,7 @@ end
 
 Convert dew point observation in precipitable water (PW).
 
-The relation is given by the Table A.1.1 of the annex of the "Manual on Estimation of Probable Maximum 
-Precipitation (PMP)" ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
+The relation is given by the Table A.1.1 of the annex of the "Manual on Estimation of Probable Maximum Precipitation (PMP)" ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
 """
 function dewpoint_to_PW(dew_data::Real)
 
@@ -177,16 +178,16 @@ end
 
 # Storm PW
 """
-    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
-    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
-    storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
-    storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
 
 Get the precipitable water for each storm.
 """
-function storm_PW end
+function PW_storm end
 
-function storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+function PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
 
     storm_duration = floor(Int, d₂/24)
     df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
@@ -206,9 +207,9 @@ function storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoi
 
 end
 
-storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
-storm_PW(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(DateTime.(storm_date), dewpoint, dewpoint_date, d₂, frequency, time_int)
-storm_PW(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = storm_PW(storm_date, dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(DateTime.(storm_date), dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(DateTime.(storm_date), dewpoint, dewpoint_date, d₂, frequency, time_int)
+PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(storm_date, dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
 
 
 

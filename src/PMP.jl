@@ -61,7 +61,7 @@ export
     storm_selection,
     get_max_persisting_dew,
     dewpoint_to_PW,
-    storm_PW,
+    PW_storm,
     PW_max,
     PW_return_period,
     storm_maximization,

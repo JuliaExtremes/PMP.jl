@@ -64,18 +64,18 @@ println("") # hide
 
 At Montréal-Trudeau International Airport station, we do not have direct access to precipitable water (PW) observations; instead, we need to convert dewpoint (in °C) to PW (in mm). The dewpoint is measured hourly, and the highest persisting dewpoint represents the data that best characterizes the humidity for each storm. According to the WMO manual, the persisting dewpoint for a specified time interval is defined as 'the value equalled or exceeded at all observations during the period.' For our purposes, we will use 12-hour time intervals, as recommended by the WMO. Furthermore, we are specifically interested in dewpoint observations taken during the PMP magnitude storms determined in the previous section. Accordingly, we need to select those relevant observation from the dewpoint dataset. 
 
-The `storm_PW` function utilizes storm dates, the dewpoint dataset, PMP duration, dewpoint observation frequency, and the selected time interval for persisting dewpoint to return the PW of each storm of interest.
+The `PW_storm` function utilizes storm dates, the dewpoint dataset, PMP duration, dewpoint observation frequency, and the selected time interval for persisting dewpoint to return the PW of each storm of interest.
 
 ```@example stationary
 obs_freq = 1     # One observation per hour
 time_int = 12    # Keep the smallest observation on each moving window of size 12h
 
 # Calculate appropriate pw for each storm
-pw_storm = storm_PW(storm.Date, dewpoint.Dew, dewpoint.DateTime, d2, obs_freq, time_int)
+pw_storm = PW_storm(storm.Date, dewpoint.Dew, dewpoint.DateTime, d2, obs_freq, time_int)
 println("") # hide
 ```
 
-If the dewpoint dataset contains observations associated only with the storms of interest, it is possible to use `get_max_persisting_dew` followed by `dewpoint_to_PW` to calculate the PW for each precipitation event. Some methods ([Beauchamp *et al.*, 2013](https://doi.org/10.1002/wrcr.20336), [Rousseau *et al.*, 2014](https://doi.org/10.1016/j.jhydrol.2014.10.053)) suggest using humidity data from before the event in addition to the observations taken during the storm. Hence, it could be appropriate to either utilize these two functions or modify `storm_PW` to take those data into consideration.
+If the dewpoint dataset contains observations associated only with the storms of interest, it is possible to use `get_max_persisting_dew` followed by `dewpoint_to_PW` to calculate the PW for each precipitation event. Some methods ([Beauchamp *et al.*, 2013](https://doi.org/10.1002/wrcr.20336), [Rousseau *et al.*, 2014](https://doi.org/10.1016/j.jhydrol.2014.10.053)) suggest using humidity data from before the event in addition to the observations taken during the storm. Hence, it could be appropriate to either utilize these two functions or modify `PW_storm` to take those data into consideration.
 
 ---
 ## Maximization ratio and PMP estimation
@@ -101,7 +101,7 @@ maximized_storm_PW_100 = storm_maximization(storm.Rain, pw_storm.PW, storm.Date,
 println("") # hide
 ```
 
-Alternatively, we could exclusively estimate the PMP for each month as follows :
+Alternatively, we could exclusively estimate the PMP as follows :
 
 ```@example stationary
 PMP_max = PMP_mm(storm.Rain, pw_storm.PW, storm.Date, pw_max.PW_max)
