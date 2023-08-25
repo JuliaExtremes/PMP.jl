@@ -187,6 +187,10 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
 
     m1 = -(bb+a1*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
     m2 = -(-bb-a2*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
+    #@assert m1 > -1 && m2 > -1
+    if m1 < -1 || m2 < -1
+        return nothing
+    end
     
     # parameters estimations
     sca = a2 - a1
