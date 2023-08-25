@@ -1,10 +1,13 @@
 """
     total_precipitation(rain::Vector{<:Real}, date::Vector{DateTime}, d₁::Int, d₂::Int)
+    total_precipitation(rain::Vector{<:Real}, date::Vector{Date}, d₁::Int, d₂::Int)
 
-Estimate the greatest precipitation taken over a given duration `d₁` on a longer duration `d₂`.
+Estimate the greatest precipitations taken over a given duration `d₁` on a longer duration `d₂`.
 
-`rain` and `date` should not contain missing data.
+The function choose the greatest precipitations of duration `d₂` while avoiding overlap. Datasets `rain` and `date` should not contain missing data. 
 """
+function total_precipitation end
+
 function total_precipitation(rain::Vector{<:Real}, date::Vector{DateTime}, d₁::Int, d₂::Int)
 
     @assert d₁ <= d₂ "the second duration should be longer than the first one."
@@ -54,9 +57,16 @@ total_precipitation(rain::Vector{<:Real}, date::Vector{Date}, d₁::Int, d₂::I
 # Storm selection
 """
     storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real, d₁::Int, d₂::Int=72)
+    storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real, d₁::Int, d₂::Int=72)
+    storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real)
+    storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real)
 
-Select storms to be maximized. 
+Select the PMP magnitude storms of each year.
+
+The function choose the greatest precipitations of duration `d₂` from data of duration `d₁` while avoiding overlap. The function then select the p (a proportion) greatest storm of each year to be maximized.
 """
+function storm_selection end
+
 function storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real, d₁::Int, d₂::Int=72)
 
     @assert 0 < p <= 1 "p should lie in the interval (0, 1]."
@@ -78,6 +88,7 @@ function storm_selection(rain::Vector{<:Real}, date::Vector{DateTime}, p::Real, 
     
     select!(storm, :Date, :Rain)
     storm.Date = Date.(storm.Date)
+    sort!(storm)
     
     return storm
 
@@ -115,18 +126,17 @@ storm_selection(rain::Vector{<:Real}, date::Vector{Date}, p::Real) = storm_selec
 
 # Maximum persisting dewpoint
 """
-    get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+    get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
-Get the maximum persisting dew point of a storm for which data are taken at a given frequency.
+Get the maximum persisting dewpoint of a storm for which data are taken at a given frequency.
     
-The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all 
-observations during the period (2009, WMO).
+The highest persisting dewpoint for some specified time interval is the value equalled or exceeded at all observations during the period ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
 """
-function get_max_persisting_dew(dew_hourly::Vector{<:Real}, frequency::Int, time_int::Int=12)
+function get_max_persisting_dew(dewpoint::Vector{<:Real}, frequency::Int, time_int::Int=12)
 
     nb = floor(Int, time_int/frequency) # window size
 
-    persisting_dews = maximum(RollingFunctions.rollmin(dew_hourly, nb))
+    persisting_dews = maximum(RollingFunctions.rollmin(dewpoint, nb))
 
     return persisting_dews
 
@@ -140,8 +150,7 @@ end
 
 Convert dew point observation in precipitable water (PW).
 
-The relation is given by the Table A.1.1 of the annex of the "Manual on Estimation of Probable Maximum 
-Precipitation (PMP)" (2009, WMO).
+The relation is given by the Table A.1.1 of the annex of the "Manual on Estimation of Probable Maximum Precipitation (PMP)" ([WMO, 2009](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlRcOzMKeA)).
 """
 function dewpoint_to_PW(dew_data::Real)
 
@@ -167,36 +176,80 @@ end
 
 
 
+# Storm PW
+"""
+    PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+    PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12)
+
+Get the precipitable water for each storm.
+"""
+function PW_storm end
+
+function PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12)
+
+    storm_duration = floor(Int, d₂/24)
+    df1 = DataFrame(Date = dewpoint_date, Dew = dewpoint)
+    
+    pw_storm = DataFrame()
+
+    for i in storm_date
+
+        df2 = filter(:Date => d -> (Day(0) <= d-i <= Day(storm_duration-1)), df1)
+        event = DataFrame(Date = i, Dew = get_max_persisting_dew(df2.Dew, frequency, time_int))
+        event.PW = dewpoint_to_PW.(event.Dew)
+        append!(pw_storm, event)
+
+    end
+
+    return pw_storm
+
+end
+
+PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(DateTime.(storm_date), dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+PW_storm(storm_date::Vector{Date}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{DateTime}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(DateTime.(storm_date), dewpoint, dewpoint_date, d₂, frequency, time_int)
+PW_storm(storm_date::Vector{DateTime}, dewpoint::Vector{<:Real}, dewpoint_date::Vector{Date}, d₂::Int, frequency::Int, time_int::Int=12) = PW_storm(storm_date, dewpoint, DateTime.(dewpoint_date), d₂, frequency, time_int)
+
+
+
+
 # Maximum precipitable water 
 """
-    PW_max(pw_storm::Vector{<:Real}, date::Vector{DateTime})
+    PW_max(pw::Vector{<:Real}, date::Vector{DateTime})
+    PW_max(pw::Vector{<:Real}, date::Vector{Date})
 
 Estimate the maximum precipitable water for each month of interest.
 """
-function PW_max(pw_storm::Vector{<:Real}, date::Vector{DateTime})
+function PW_max end
+
+function PW_max(pw::Vector{<:Real}, date::Vector{DateTime})
     
     month = Dates.month.(date)
-    df = DataFrame(PW = pw_storm, Month = month)
+    df = DataFrame(PW = pw, Month = month)
     PW_max = combine(groupby(df, :Month), :PW => maximum => :PW_max)
     
     return PW_max
 
 end
 
-PW_max(pw_storm::Vector{<:Real}, date::Vector{Date}) = PW_max(pw_storm, DateTime.(date))
+PW_max(pw::Vector{<:Real}, date::Vector{Date}) = PW_max(pw, DateTime.(date))
   
 
 
 """
-    PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
+    PW_return_period(pw::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
+    PW_return_period(pw::Vector{<:Real}, date::Vector{Date}, return_period::Int=100)
 
-Estimate the precipitable water return value for each month of interest.
+Estimate the precipitable water return value for each month of interest for a given return period.
 """
-function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
+function PW_return_period end
+
+function PW_return_period(pw::Vector{<:Real}, date::Vector{DateTime}, return_period::Int=100)
     
     ym = Dates.yearmonth.(date)
     month = Dates.month.(date)
-    df1 = DataFrame(PW = pw_storm, YM = ym, Month = month)
+    df1 = DataFrame(PW = pw, YM = ym, Month = month)
     
     PW_month = combine(groupby(df1, :YM), :PW => maximum => :PW, :Month => :Month)
     ind = combine(groupby(df1, :Month), :PW => maximum => :PW)
@@ -214,16 +267,19 @@ function PW_return_period(pw_storm::Vector{<:Real}, date::Vector{DateTime}, retu
     return PW_rp
 end
 
-PW_return_period(pw_storm::Vector{<:Real}, date::Vector{Date}, return_period::Int=100) = PW_return_period(pw_storm, DateTime.(date), return_period)
+PW_return_period(pw::Vector{<:Real}, date::Vector{Date}, return_period::Int=100) = PW_return_period(pw, DateTime.(date), return_period)
 
 
 
 # Storm maximization
 """
     storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{DateTime}, pw_max::Vector{<:Real})
+    storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Date}, pw_max::Vector{<:Real})
 
 Estimation of the maximization ratio, effective precipitation and maximized precipitation.
 """
+function storm_maximization end
+
 function storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{DateTime}, pw_max::Vector{<:Real})
 
     months = Dates.month.(date_storm)
@@ -247,9 +303,12 @@ storm_maximization(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_st
 # PMP_mm
 """
     PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{DateTime}, pw_max::Vector{<:Real})
+    PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{Date}, pw_max::Vector{<:Real})
 
 Estimation of the PMP by moisture maximization.
 """
+function PMP_mm end
+
 function PMP_mm(rain_storm::Vector{<:Real}, pw_storm::Vector{<:Real}, date_storm::Vector{DateTime}, pw_max::Vector{<:Real})
     
     storm = PMP.storm_maximization(rain_storm, pw_storm, date_storm, pw_max)
