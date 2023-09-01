@@ -65,13 +65,8 @@ end
 
 # Evaluations
 
-function cdf(pd::PearsonType1, x::Real)   
-    td = getdistribution(pd)
-    return cdf(td, x)
-end
-
-function getdistribution(pd::PearsonType1)
-   return LocationScale(location(pd), scale(pd), Beta(shape(pd)...)) 
+function cdf(pd::PearsonType1, x::Real)
+    return cdf(Beta(shape(pd)...),(x-location(pd))/scale(pd))
 end
 
 function insupport(pd::PearsonType1, x::Real)
@@ -79,8 +74,7 @@ function insupport(pd::PearsonType1, x::Real)
 end
 
 function logpdf(pd::PearsonType1, x::Real)
-    td = getdistribution(pd)
-    return logpdf(td, x)
+    return logpdf(Beta(shape(pd)...), (x-location(pd))/scale(pd)) - log(scale(pd))
 end
 
 function maximum(pd::PearsonType1)
@@ -92,13 +86,11 @@ function minimum(pd::PearsonType1)
 end
 
 function quantile(pd::PearsonType1, p::Real)
-    td = getdistribution(pd)
-    return quantile(td, p)
+    return location(pd) + scale(pd) * quantile(Beta(shape(pd)...), p)
 end
 
 function rand(rng::Random.AbstractRNG, pd::PearsonType1)
-    td = getdistribution(pd)
-    return rand(rng, td)
+    return location(pd) + scale(pd) * rand(rng, Beta(shape(pd)...))
 end
 
 
@@ -106,42 +98,35 @@ end
 # Statistics
 
 function mean(pd::PearsonType1)
-    td = getdistribution(pd)
-    return mean(td)
+    return location(pd) + scale(pd) * mean(Beta(shape(pd)...))
 end
 
 function var(pd::PearsonType1)
-    td = getdistribution(pd)
-    return var(td)
+    return scale(pd)^2 * var(Beta(shape(pd)...))
 end
 
 function std(pd::PearsonType1)
-    td = getdistribution(pd)
-    return std(td)
+    return scale(pd) * std(Beta(shape(pd)...))
 end
 
 function modes(pd::PearsonType1)
-    td = getdistribution(pd)
-    return modes(td)
+    return location(pd) .+ scale(pd) .* modes(Beta(shape(pd)...))
 end
 
 function mode(pd::PearsonType1)
-    td = getdistribution(pd)
-    return mode(td)
+    return location(pd) + scale(pd)* mode(Beta(shape(pd)...))
 end
 
 function skewness(pd::PearsonType1)
-    td = getdistribution(pd)
-    return skewness(td)
+    return skewness(Beta(shape(pd)...))
 end
 
 function kurtosis(pd::PearsonType1) # excess kurtosis
-    td = getdistribution(pd)
-    return kurtosis(td)
+    return kurtosis(Beta(shape(pd)...))
 end
 
 function kurtosis(pd::PearsonType1, correction::Bool) # kurtosis
-    td = getdistribution(pd)
+    td = Beta(shape(pd)...)
     if correction
         return kurtosis(td)
     end
@@ -149,13 +134,11 @@ function kurtosis(pd::PearsonType1, correction::Bool) # kurtosis
 end
 
 function entropy(pd::PearsonType1)
-    td = getdistribution(pd)
-    return entropy(td)
+    return entropy(Beta(shape(pd)...)) + log(scale(pd))
 end
 
 function entropy(pd::PearsonType1, base::Real)
-    td = getdistribution(pd)
-    return entropy(td)/log(base)
+    return entropy(pd)/log(base)
 end
 
 
