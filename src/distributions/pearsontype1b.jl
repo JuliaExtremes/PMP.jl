@@ -35,7 +35,7 @@ function PearsonType1b(b::T, α::T, β::T ; check_args::Bool=true) where {T <: R
     return PearsonType1b{T}(b, α, β)
 end
 
-PearsonType1b(b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1b(promote(b, α , β)...; check_args=check_args)
+PearsonType1b(b::Real, α::Real, β::Real; check_args::Bool=true) = PearsonType1b(promote(b, α, β)...; check_args=check_args)
 PearsonType1b(b::Real, α::Integer, β::Integer; check_args::Bool=true) = PearsonType1b(float(b), float(α), float(β); check_args=check_args)
 PearsonType1b() = PearsonType1b{Float64}(1.0, 1.0, 1.0)
 

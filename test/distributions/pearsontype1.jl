@@ -87,7 +87,8 @@ end
     @testset "kurtosis" begin
         @test kurtosis(pd) == 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3))
         @test kurtosis(pd, false) ≈ kurtosis(Beta(shape(pd)...)) + 3
-        @test kurtosis(pd, false) == kurtosis(pd) + 3                                     
+        @test kurtosis(pd, false) == kurtosis(pd) + 3
+        @test kurtosis(pd, true) == kurtosis(pd)                                     
     end
 
     @testset "entropy" begin
