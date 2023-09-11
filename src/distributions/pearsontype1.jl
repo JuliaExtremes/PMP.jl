@@ -189,7 +189,6 @@ end
 
 # fit by maximum likelihood 
 
-using Optim
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
 #     # PearsonDS propose de +-0.1 aux valeurs initiales
@@ -203,23 +202,20 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
 
     loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1(θ...),y))
 
-    # fobj(θ) = -loglike(θ)
-    fobj = TwiceDifferentiable(loglike, initialvalues; autodiff = :forward)
+    fobj(θ) = -loglike(θ)
 
     res = optimize(fobj, initialvalues)
 
-#     if Optim.converged(res)
-#         θ̂ = Optim.minimizer(res)
-#     else
-#         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-#         θ̂ = Optim.minimizer(res)
-#     end
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = initialvalues
+    end
     
-#     return PearsonType1(θ̂...)
+    return PearsonType1(θ̂...)
 end
 
-# ne fonctionne pas : erreur 
-# MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     
     initialvalues = params(PMP.fit_mme(PearsonType1, y))
