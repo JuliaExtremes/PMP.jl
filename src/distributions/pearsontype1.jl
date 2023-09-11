@@ -189,38 +189,40 @@ end
 
 # fit by maximum likelihood 
 
+using Optim
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
-    # PearsonDS propose de +-0.1 aux valeurs initiales
-    if initialvalues[2] > 0
-        initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
-        initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
-    else
-        initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
-        initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
-    end 
+#     # PearsonDS propose de +-0.1 aux valeurs initiales
+#     if initialvalues[2] > 0
+#         initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
+#         initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
+#     else
+#         initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
+#         initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
+#     end 
 
-    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
+    loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1(θ...),y))
 
-    fobj(θ) = -loglike(θ)
+    # fobj(θ) = -loglike(θ)
+    fobj = TwiceDifferentiable(loglike, initialvalues; autodiff = :forward)
 
     res = optimize(fobj, initialvalues)
 
-    if Optim.converged(res)
-        θ̂ = Optim.minimizer(res)
-    else
-        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = Optim.minimizer(res)
-    end
+#     if Optim.converged(res)
+#         θ̂ = Optim.minimizer(res)
+#     else
+#         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+#         θ̂ = Optim.minimizer(res)
+#     end
     
-    return PearsonType1(θ̂...)
+#     return PearsonType1(θ̂...)
 end
 
 # ne fonctionne pas : erreur 
 # MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     
-    initialvalues = PMP.fit_mme(PearsonType1, y)
+    initialvalues = params(PMP.fit_mme(PearsonType1, y))
     
-    return PMP.fit_mle(pd, y, initialvalues)  # retour un PearsonType1 
+    return PMP.fit_mle(pd, y, [initialvalues...])  # retour un PearsonType1 
 end
