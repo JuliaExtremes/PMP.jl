@@ -143,7 +143,8 @@ end
 
 # fit by method of moments
 function fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
-    # sample moments
+    # sample moment
+    # possible avec la moyenne plutôt que la variance ?
     vv = var(y)
     ss = skewness(y)
     kk = kurtosis(y) + 3 # not excess kurtosis
