@@ -144,6 +144,7 @@ end
 
 
 # fit by method of moments
+
 function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # sample moments
     mm = mean(y)
@@ -177,10 +178,18 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     
     # parameters estimations
     sca = a2 - a1
-    a = mm - sca * (m1+1)/(m1+m2+2)
-    b = a + sca
     α = m1 + 1
     β = m2 + 1
+    a = mm - sca * α/(α+β)
+    b = a + sca
+
+    # vérifier le support
+    if a > minimum(y) 
+        a = minimum(y) 
+    end #-> message d'erreur 
+    if b < maximum(y) 
+        b = maximum(y) 
+    end #-> message d'erreur
 
     return PearsonType1(a, b, α, β)
 end
@@ -190,37 +199,58 @@ end
 # fit by maximum likelihood 
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
- 
-    # PearsonDS propose de +-0.1 aux valeurs initiales
-    if initialvalues[2] > 0
-        initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
-        initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
-    else
-        initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
-        initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
-    end 
-
+        
+    #initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.9*initialvalue[1]
+    #initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.9*initialvalue[2]
+    
     loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
-
     fobj(θ) = -loglike(θ)
 
-    res = optimize(fobj, initialvalues)
-
+    lower = [-Inf, maximum(y), 0, 0]
+    upper = [minimum(y), Inf, Inf, Inf]
+    
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
+    
     if Optim.converged(res)
         θ̂ = Optim.minimizer(res)
     else
         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = Optim.minimizer(res)
+        θ̂ = initialvalues
     end
-    
+        
     return PearsonType1(θ̂...)
 end
 
-# ne fonctionne pas : erreur 
-# MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
-    
-    initialvalues = PMP.fit_mme(PearsonType1, y)
-    
-    return PMP.fit_mle(pd, y, initialvalues)  # retour un PearsonType1 
+    fd = PMP.fit_mle(pd, y, [params(fit_mme(pd, y))...])
+    return fd
+end 
+
+
+
+# find initial values for fit_mle
+
+function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
+    α, β = shape(fit_mme(pd, y))
+    a = minimum(y)
+    b = maximum(y)
+
+    loglike(θ₁::Real, θ₂::Real) = sum(logpdf.(PearsonType1(θ₁, θ₂, α, β),y))
+    fobj(θ₁, θ₂) = -loglike(θ₁, θ₂)
+
+    lower = [-Inf, maximum(y)]
+    upper = [minimum(y), Inf]
+
+    res = optimize(fobj, lower, upper, [a, b], autodiff = :forward)
+
+    if Optim.converged(res)
+        θ̂₁, θ̂₂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂₁, θ̂₂ = initialvalues
+    end
+
+    return θ̂₁, θ̂₂, α, β
 end
+
+# trouver alpha beta par moment, a b par mle -> getinitialvalues pour ensuite faire mle pour chaque params

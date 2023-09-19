@@ -55,8 +55,8 @@ export
 
     # distribution fitting
     fit_mme,
-    #fit_mle
-    #fit_bayes
+    fit_mle,
+    #fit_bayes,
 
     # moisture maxmization
     total_precipitation,
