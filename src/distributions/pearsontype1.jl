@@ -199,11 +199,17 @@ end
 # fit by maximum likelihood 
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
-        
-    #initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.9*initialvalue[1]
-    #initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.9*initialvalue[2]
-    
-    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
+ 
+#     # PearsonDS propose de +-0.1 aux valeurs initiales
+#     if initialvalues[2] > 0
+#         initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
+#         initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
+#     else
+#         initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
+#         initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
+#     end 
+
+    loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1(θ...),y))
     fobj(θ) = -loglike(θ)
 
     lower = [-Inf, maximum(y), 0, 0]
@@ -222,7 +228,7 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
 end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
-    fd = PMP.fit_mle(pd, y, [params(fit_mme(pd, y))...])
+    fd = PMP.fit_mle(pd, y, [params(fit_mme(PearsonType1, y))...])
     return fd
 end 
 
