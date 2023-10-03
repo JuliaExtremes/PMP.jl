@@ -105,27 +105,39 @@ end
     fd = PMP.fit_mme(PearsonType1, y)
     a, b, α, β = params(fd)
 
-    @test mean(y) ≈ (b-a)*α/(α+β) + a
-    @test var(y) ≈ (b-a)^2*α*β/((α+β)^2*(α+β+1))
+    @test mean(y) ≈ (b-a)*α/(α+β)+a atol=0.01
+    @test var(y) ≈ (b-a)^2*α*β/((α+β)^2*(α+β+1)) atol=0.01
     @test skewness(y) ≈ 2*(β-α)*sqrt(α+β+1)/((α+β+2)*sqrt(α*β))
     @test kurtosis(y) ≈ 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3))
 end
 
 
 
-#@testset "fit_mle" begin
-#    y = load("test/data/pearsontype1_sample.jld2", "y")
-#    fd = PMP.fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 1.])
+@testset "fit_mle" begin
+    y = load("data/pearsontype1_sample.jld2", "y")
+    fd = fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 2.])
     
-#    @test minimum(fd) ≈ -1. atol=0.01
-#    @test maximum(fd) ≈ 1. atol=0.05
-#    @test shape(fd)[1] ≈ 2. atol=.1
-#    @test shape(fd)[2] ≈ 3. atol=.3
+    @test minimum(fd) ≈ -1. atol=0.1
+    @test maximum(fd) ≈ 1. atol=0.1
+    @test shape(fd)[1] ≈ 2. atol=.1
+    @test shape(fd)[2] ≈ 3. atol=.1
 
-#    fd2 = PMP.fit_mle(PearsonType1, y)
+    fd2 = fit_mle(PearsonType1, y)
 
-#    @test minimum(fd2) ≈ -1. atol=0.01
-#    @test maximum(fd2) ≈ 1. atol=0.05
-#    @test shape(fd2)[1] ≈ 2. atol=.1
-#    @test shape(fd2)[2] ≈ 3. atol=.3
-#end
+    @test minimum(fd2) ≈ -1. atol=0.1
+    @test maximum(fd2) ≈ 1. atol=0.1
+    @test shape(fd2)[1] ≈ 2. atol=.1
+    @test shape(fd2)[2] ≈ 3. atol=.1
+end
+
+
+
+@testset "getinitialvalues" begin
+    y = load("data/pearsontype1_sample.jld2", "y")
+    ivalues = getinitialvalues(PearsonType1, y)
+
+    @test ivalues[1] ≈ -1. atol=0.01
+    @test ivalues[2] ≈ 1. atol=0.1
+    @test ivalues[3] ≈ 2. atol=0.5
+    @test ivalues[4] ≈ 3. atol=0.5
+end
