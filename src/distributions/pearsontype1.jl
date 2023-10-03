@@ -173,6 +173,7 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     m2 = -(-bb-a2*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
     #@assert m1 > -1 && m2 > -1
     if m1 < -1 || m2 < -1
+        @warn "The parameters associated with this data cannot be found by method of moments"
         return nothing
     end
     
@@ -200,19 +201,18 @@ end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
-#     # PearsonDS propose de +-0.1 aux valeurs initiales
-#     if initialvalues[2] > 0
-#         initialvalues[1] = min(initialvalues[1], minimum(y)) # - 0.1
-#         initialvalues[2] = max(initialvalues[2], maximum(y)) # + 0.1
-#     else
-#         initialvalues[1] = max(initialvalues[1], maximum(y)) # + 0.1
-#         initialvalues[2] = min(initialvalues[2], minimum(y)) # - 0.1
-#     end 
+    if initialvalues[2]>0
+        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
+        initialvalues[2] = max(initialvalues[2], maximum(y)) + .01*maximum(y)
+    else
+        initialvalues[1] = max(initialvalues[1], maximum(y)) + abs(.01*maximum(y))
+        initialvalues[2] = min(initialvalues[2], minimum(y)) - abs(.01*minimum(y))
+    end
 
     loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1(θ...),y))
     fobj(θ) = -loglike(θ)
 
-    lower = [-Inf, maximum(y), 0, 0]
+    lower = [-Inf, maximum(y), 2*eps(), 2*eps()]
     upper = [minimum(y), Inf, Inf, Inf]
     
     res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
@@ -228,7 +228,8 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
 end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
-    fd = PMP.fit_mle(pd, y, [params(fit_mme(PearsonType1, y))...])
+    initialvalues =  getinitialvalues(PearsonType1, y)
+    fd = PMP.fit_mle(pd, y, initialvalues)
     return fd
 end 
 
@@ -238,25 +239,23 @@ end
 
 function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     α, β = shape(fit_mme(pd, y))
-    a = minimum(y)
-    b = maximum(y)
+    initialvalues = [minimum(y)- abs(.01*minimum(y)), maximum(y)+.01*maximum(y)]
 
-    loglike(θ₁::Real, θ₂::Real) = sum(logpdf.(PearsonType1(θ₁, θ₂, α, β),y))
-    fobj(θ₁, θ₂) = -loglike(θ₁, θ₂)
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), (y.-θ[1])/(θ[2]-θ[1])) .- log(θ[2]-θ[1]))
+
+    fobj(θ) = -loglike(θ)
 
     lower = [-Inf, maximum(y)]
     upper = [minimum(y), Inf]
 
-    res = optimize(fobj, lower, upper, [a, b], autodiff = :forward)
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
 
     if Optim.converged(res)
-        θ̂₁, θ̂₂ = Optim.minimizer(res)
+        θ̂ = Optim.minimizer(res)
     else
-        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂₁, θ̂₂ = initialvalues
+        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = initialvalues
     end
 
-    return θ̂₁, θ̂₂, α, β
+    return [θ̂[1], θ̂[2], α, β]
 end
-
-# trouver alpha beta par moment, a b par mle -> getinitialvalues pour ensuite faire mle pour chaque params

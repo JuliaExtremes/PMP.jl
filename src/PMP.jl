@@ -56,6 +56,7 @@ export
     # distribution fitting
     fit_mme,
     fit_mle,
+    getinitialvalues,
     #fit_bayes,
 
     # moisture maxmization
