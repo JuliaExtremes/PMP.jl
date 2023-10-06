@@ -109,3 +109,31 @@ end
     @test skewness(y) ≈ 2*(β-α)*sqrt(α+β+1)/((α+β+2)*sqrt(α*β))
     @test kurtosis(y) ≈ 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3))
 end
+
+
+
+@testset "fit_mle" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    fd = fit_mle(PearsonType1b, y, [maximum(y), 1., 2.])
+    
+    @test maximum(fd) ≈ 1. atol=.1
+    @test shape(fd)[1] ≈ 2. atol=.1
+    @test shape(fd)[2] ≈ 3. atol=.1
+
+    fd2 = fit_mle(PearsonType1b, y)
+
+    @test maximum(fd2) ≈ 1. atol=.1
+    @test shape(fd2)[1] ≈ 2. atol=.5
+    @test shape(fd2)[2] ≈ 3. atol=.5
+end
+
+
+
+@testset "getinitialvalues" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    ivalues = getinitialvalues(PearsonType1b, y)
+
+    @test ivalues[1] ≈ 1. atol=.1
+    @test ivalues[2] ≈ 2. atol=.5
+    @test ivalues[3] ≈ 3. atol=.5
+end

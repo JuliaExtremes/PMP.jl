@@ -241,7 +241,7 @@ function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     α, β = shape(fit_mme(pd, y))
     initialvalues = [minimum(y)- abs(.01*minimum(y)), maximum(y)+.01*maximum(y)]
 
-    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), (y.-θ[1])/(θ[2]-θ[1])) .- log(θ[2]-θ[1]))
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), (y.-θ[1])./(θ[2]-θ[1])) .- log(θ[2]-θ[1]))
 
     fobj(θ) = -loglike(θ)
 
