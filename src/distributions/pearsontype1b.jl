@@ -142,6 +142,7 @@ end
 
 
 # fit by method of moments
+
 function fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     # sample moment
     # possible avec la moyenne plutôt que la variance ?
@@ -187,30 +188,60 @@ end
 
 function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
-    # PearsonDS propose de +-0.1 aux valeurs initiales
-    initialvalues[1] = max(initialvalues[2], maximum(y)) # + 0.1
+    if initialvalues[1]>0
+        initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
+    else
+        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
+    end
 
-    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1b(θ...),y))
-
+    loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1b(θ...),y))
     fobj(θ) = -loglike(θ)
 
-    res = optimize(fobj, initialvalues)
-
+    lower = [maximum(y), 2*eps(), 2*eps()]
+    upper = [Inf, Inf, Inf]
+    
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
+    
     if Optim.converged(res)
         θ̂ = Optim.minimizer(res)
     else
         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = Optim.minimizer(res)
+        θ̂ = initialvalues
     end
-    
+        
     return PearsonType1b(θ̂...)
 end
 
-# ne fonctionne pas : erreur 
-# MethodError: no method matching setindex!(::NTuple{4, Float64}, ::Float64, ::Int64)
 function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
-    
-    initialvalues = PMP.fit_mme(PearsonType1b, y)
-    
-    return PMP.fit_mle(pd, y, initialvalues)  # retour un PearsonType1 b
+    initialvalues =  getinitialvalues(PearsonType1b, y)
+    fd = PMP.fit_mle(pd, y, initialvalues)
+    return fd
+end 
+
+
+
+# find initial values for fit_mle
+
+function getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
+    α, β = shape(fit_mme(pd, y))
+    initialvalue = [maximum(y) + .01*maximum(y)]
+
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), y./θ[1]) .- log(θ[1]))
+
+    fobj(θ) = -loglike(θ)
+
+    lower = [maximum(y)]
+    upper = [Inf]
+
+    res = optimize(fobj, lower, upper, initialvalue, autodiff = :forward)
+    #res = optimize(fobj, [initialvalue])
+
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = initialvalue
+    end
+
+    return [θ̂[1], α, β]
 end
