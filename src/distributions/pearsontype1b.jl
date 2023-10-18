@@ -194,7 +194,7 @@ function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Ve
         initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
     end
 
-    loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1b(θ...),y))
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1b(θ...),y))
     fobj(θ) = -loglike(θ)
 
     lower = [maximum(y), 2*eps(), 2*eps()]
@@ -227,7 +227,6 @@ function getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     initialvalue = [maximum(y) + .01*maximum(y)]
 
     loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), y./θ[1]) .- log(θ[1]))
-
     fobj(θ) = -loglike(θ)
 
     lower = [maximum(y)]

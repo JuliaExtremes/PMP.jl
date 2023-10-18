@@ -100,7 +100,7 @@ end
 
 
 
-@testset "fit_mme" begin
+@testset "fit_mme PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     fd = PMP.fit_mme(PearsonType1b, y)
     b, α, β = params(fd)
@@ -112,7 +112,7 @@ end
 
 
 
-@testset "fit_mle" begin
+@testset "fit_mle PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     fd = fit_mle(PearsonType1b, y, [maximum(y), 1., 2.])
     
@@ -123,17 +123,17 @@ end
     fd2 = fit_mle(PearsonType1b, y)
 
     @test maximum(fd2) ≈ 1. atol=.1
-    @test shape(fd2)[1] ≈ 2. atol=.5
-    @test shape(fd2)[2] ≈ 3. atol=.5
+    @test shape(fd2)[1] ≈ 2. atol=.3
+    @test shape(fd2)[2] ≈ 3. atol=.3
 end
 
 
 
-@testset "getinitialvalues" begin
+@testset "getinitialvalues PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     ivalues = getinitialvalues(PearsonType1b, y)
 
     @test ivalues[1] ≈ 1. atol=.1
-    @test ivalues[2] ≈ 2. atol=.5
-    @test ivalues[3] ≈ 3. atol=.5
+    @test ivalues[2] ≈ 2. atol=.3
+    @test ivalues[3] ≈ 3. atol=.3
 end

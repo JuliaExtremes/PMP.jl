@@ -145,6 +145,56 @@ end
 
 # fit by method of moments
 
+function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
+    # sample moments
+    mm = mean(y)
+    vv = var(y)
+    ss = skewness(y)
+    kk = kurtosis(y) + 3 # not excess kurtosis
+
+    # the kurtosis is bounded below by the squared skewness plus 1
+    if ss^2 > kk-1 
+        @error "There are no probability distributions with these moments" 
+    end
+
+    aa = 2*kk - 3*ss^2 - 6
+    bb = ss*(kk + 3)
+    cc = 4*kk - 3*ss^2
+
+    a1 = sqrt(vv)/2 * ((-bb-sqrt(bb^2-4*cc*aa))/aa)
+    a2 = sqrt(vv)/2 * ((-bb+sqrt(bb^2-4*cc*aa))/aa)
+    if a1 > 0
+        tmp = a1 
+        a1 = a2 
+        a2 = tmp
+    end
+
+    m1 = -(bb+a1*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
+    m2 = -(-bb-a2*(10*kk-12*ss^2-18)/sqrt(vv)) / (sqrt(bb^2-4*cc*aa))
+    #@assert m1 > -1 && m2 > -1
+    if m1 < -1 || m2 < -1
+        @warn "The parameters associated with this data cannot be found by method of moments"
+        return nothing
+    end
+    
+    # parameters estimations
+    sca = a2 - a1
+    α = m1 + 1
+    β = m2 + 1
+    a = a
+    b = a + sca
+
+    # support verification
+    if a >= minimum(y) 
+        a = minimum(y) 
+    end #-> message d'erreur 
+    if b <= maximum(y) 
+        b = maximum(y) 
+    end #-> message d'erreur
+
+    return PearsonType1(a, b, α, β)
+end
+
 function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # sample moments
     mm = mean(y)
@@ -184,11 +234,11 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     a = mm - sca * α/(α+β)
     b = a + sca
 
-    # vérifier le support
-    if a > minimum(y) 
+    # support verification
+    if a >= minimum(y) 
         a = minimum(y) 
     end #-> message d'erreur 
-    if b < maximum(y) 
+    if b <= maximum(y) 
         b = maximum(y) 
     end #-> message d'erreur
 
@@ -198,6 +248,32 @@ end
 
 
 # fit by maximum likelihood 
+
+function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, a::Real)
+ 
+    if initialvalues[1]>0
+        initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
+    else
+        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
+    end
+
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(θ[2], θ[3]), (y.-a)./(θ[1]-a)) .- log(θ[1]-a))
+    fobj(θ) = -loglike(θ)
+
+    lower = [maximum(y), 2*eps(), 2*eps()]
+    upper = [Inf, Inf, Inf]
+    
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
+    
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = initialvalues
+    end
+        
+    return PearsonType1(a, θ̂[1], θ̂[2], θ̂[3])
+end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
@@ -209,7 +285,7 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
         initialvalues[2] = min(initialvalues[2], minimum(y)) - abs(.01*minimum(y))
     end
 
-    loglike(θ::Vector{<:Real}) = -sum(logpdf.(PearsonType1(θ...),y))
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
     fobj(θ) = -loglike(θ)
 
     lower = [-Inf, maximum(y), 2*eps(), 2*eps()]
@@ -227,15 +303,44 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
     return PearsonType1(θ̂...)
 end
 
+function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
+    initialvalues =  getinitialvalues(PearsonType1, y, a)
+    fd = fit_mle(pd, y, initialvalues[2:4], a)
+    return fd
+end 
+
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     initialvalues =  getinitialvalues(PearsonType1, y)
-    fd = PMP.fit_mle(pd, y, initialvalues)
+    fd = fit_mle(pd, y, initialvalues)
     return fd
 end 
 
 
 
 # find initial values for fit_mle
+
+function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
+    α, β = shape(fit_mme(pd, y))
+    initialvalue = [maximum(y)+.01*maximum(y)]
+
+    loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), (y.-a)./(θ[1]-a)) .- log(θ[1]-a))
+
+    fobj(θ) = -loglike(θ)
+
+    lower = [maximum(y)]
+    upper = [Inf]
+
+    res = optimize(fobj, lower, upper, initialvalue, autodiff = :forward)
+
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = initialvalue
+    end
+
+    return [a, θ̂[1], α, β]
+end
 
 function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     α, β = shape(fit_mme(pd, y))
