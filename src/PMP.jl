@@ -16,6 +16,7 @@ import Extremes: returnlevel
 
 # distributions
 include("distributions/pearsontype1.jl");
+include("distributions/pearsontype1b.jl");
 
 # usual PMP 
 include("moisture_maximization.jl");
@@ -27,6 +28,7 @@ include("data_example.jl");
 export
     # distribution types
     PearsonType1,
+    PearsonType1b,
 
     # methods
     params,      # get the tuple of parameter
@@ -53,8 +55,9 @@ export
 
     # distribution fitting
     fit_mme,
-    #fit_mle
-    #fit_bayes
+    fit_mle,
+    getinitialvalues,
+    #fit_bayes,
 
     # moisture maxmization
     total_precipitation,
