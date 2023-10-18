@@ -100,10 +100,20 @@ end
 
 
 
-@testset "fit_mme" begin
+@testset "fit_mme PearsonType1" begin
     y = load("data/pearsontype1_sample.jld2", "y")
-    fd = PMP.fit_mme(PearsonType1, y)
-    a, b, α, β = params(fd)
+    a = -1
+    fd1 = fit_mme(PearsonType1, y, a)
+    b = fd1.b
+    α, β = shape(fd1)
+
+    @test mean(y) ≈ (b-a)*α/(α+β)+a atol=0.05
+    @test var(y) ≈ (b-a)^2*α*β/((α+β)^2*(α+β+1)) atol=0.01
+    @test skewness(y) ≈ 2*(β-α)*sqrt(α+β+1)/((α+β+2)*sqrt(α*β))
+    @test kurtosis(y) ≈ 6*(α^3-α^2*(2*β-1)+β^2*(β+1)-2*α*β*(β+2))/(α*β*(α+β+2)*(α+β+3))
+
+    fd2 = fit_mme(PearsonType1, y)
+    a, b, α, β = params(fd2)
 
     @test mean(y) ≈ (b-a)*α/(α+β)+a atol=0.01
     @test var(y) ≈ (b-a)^2*α*β/((α+β)^2*(α+β+1)) atol=0.01
@@ -113,31 +123,52 @@ end
 
 
 
-@testset "fit_mle" begin
+@testset "fit_mle PearsonType1" begin
     y = load("data/pearsontype1_sample.jld2", "y")
-    fd = fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 2.])
+    a = -1
+    fd1 = fit_mle(PearsonType1, y, [maximum(y), 1., 2.], a)
+
+    @test maximum(fd1) ≈ 1. atol=.05
+    @test shape(fd1)[1] ≈ 2. atol=.1
+    @test shape(fd1)[2] ≈ 3. atol=.3
+
+    fd2 = fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 2.])
     
-    @test minimum(fd) ≈ -1. atol=.1
-    @test maximum(fd) ≈ 1. atol=.1
-    @test shape(fd)[1] ≈ 2. atol=.1
-    @test shape(fd)[2] ≈ 3. atol=.1
-
-    fd2 = fit_mle(PearsonType1, y)
-
-    @test minimum(fd2) ≈ -1. atol=.01
+    @test minimum(fd2) ≈ -1. atol=.1
     @test maximum(fd2) ≈ 1. atol=.1
-    @test shape(fd2)[1] ≈ 2. atol=.5
-    @test shape(fd2)[2] ≈ 3. atol=.5
+    @test shape(fd2)[1] ≈ 2. atol=.1
+    @test shape(fd2)[2] ≈ 3. atol=.3
+
+    fd3 = fit_mle(PearsonType1, y, a)
+
+    @test maximum(fd3) ≈ 1. atol=.05
+    @test shape(fd3)[1] ≈ 2. atol=.1
+    @test shape(fd3)[2] ≈ 3. atol=.3
+
+    fd4 = fit_mle(PearsonType1, y)
+
+    @test minimum(fd4) ≈ -1. atol=.01
+    @test maximum(fd4) ≈ 1. atol=.1
+    @test shape(fd4)[1] ≈ 2. atol=.3
+    @test shape(fd4)[2] ≈ 3. atol=.3
 end
 
 
 
-@testset "getinitialvalues" begin
+@testset "getinitialvalues PearsonType1" begin
     y = load("data/pearsontype1_sample.jld2", "y")
-    ivalues = getinitialvalues(PearsonType1, y)
+    a = -1
+    ivalues1 = getinitialvalues(PearsonType1, y, a)
 
-    @test ivalues[1] ≈ -1. atol=.01
-    @test ivalues[2] ≈ 1. atol=.1
-    @test ivalues[3] ≈ 2. atol=.5
-    @test ivalues[4] ≈ 3. atol=.5
+    @test ivalues1[1] == -1.
+    @test ivalues1[2] ≈ 1. atol=.1
+    @test ivalues1[3] ≈ 2. atol=.3
+    @test ivalues1[4] ≈ 3. atol=.4
+
+    ivalues2 = getinitialvalues(PearsonType1, y)
+
+    @test ivalues2[1] ≈ -1. atol=.01
+    @test ivalues2[2] ≈ 1. atol=.1
+    @test ivalues2[3] ≈ 2. atol=.3
+    @test ivalues2[4] ≈ 3. atol=.4
 end
