@@ -331,7 +331,6 @@ function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
         return [a, θ̂[1], α, β]
     else
         @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method."
-        return nothing
     end
 end
 
@@ -353,6 +352,5 @@ function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
         return [θ̂[1], θ̂[2], α, β]
     else
         @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method."
-        return nothing
     end
 end
