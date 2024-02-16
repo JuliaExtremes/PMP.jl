@@ -145,7 +145,6 @@ end
 
 function fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     # sample moment
-    # possible avec la moyenne plutôt que la variance ?
     vv = var(y)
     ss = skewness(y)
     kk = kurtosis(y) + 3 # not excess kurtosis
@@ -188,11 +187,8 @@ end
 
 function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
-    if initialvalues[1]>0
-        initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
-    else
-        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
-    end
+    iv = [initialvalues[1], initialvalues[2], initialvalues[3]]
+    initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
 
     loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1b(θ...),y))
     fobj(θ) = -loglike(θ)
@@ -206,7 +202,7 @@ function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Ve
         θ̂ = Optim.minimizer(res)
     else
         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = initialvalues
+        θ̂ = iv
     end
         
     return PearsonType1b(θ̂...)
@@ -233,7 +229,6 @@ function getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     upper = [Inf]
 
     res = optimize(fobj, lower, upper, initialvalue, autodiff = :forward)
-    #res = optimize(fobj, [initialvalue])
 
     if Optim.converged(res)
         θ̂ = Optim.minimizer(res)

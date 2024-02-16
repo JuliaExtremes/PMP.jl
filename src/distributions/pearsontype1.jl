@@ -187,7 +187,7 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
     # support verification
     if a >= minimum(y) 
         a = minimum(y) 
-    end #-> message d'erreur 
+    end 
     if b <= maximum(y) 
         b = maximum(y) 
     end #-> message d'erreur
@@ -237,7 +237,7 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     # support verification
     if a >= minimum(y) 
         a = minimum(y) 
-    end #-> message d'erreur 
+    end
     if b <= maximum(y) 
         b = maximum(y) 
     end #-> message d'erreur
@@ -251,11 +251,8 @@ end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, a::Real)
  
-    if initialvalues[1]>0
-        initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
-    else
-        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
-    end
+    iv = [initialvalues[1], initialvalues[2], initialvalues[3]]
+    initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
 
     loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(θ[2], θ[3]), (y.-a)./(θ[1]-a)) .- log(θ[1]-a))
     fobj(θ) = -loglike(θ)
@@ -269,7 +266,7 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
         θ̂ = Optim.minimizer(res)
     else
         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = initialvalues
+        θ̂ = iv
     end
         
     return PearsonType1(a, θ̂[1], θ̂[2], θ̂[3])
@@ -277,13 +274,9 @@ end
 
 function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
-    if initialvalues[2]>0
-        initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
-        initialvalues[2] = max(initialvalues[2], maximum(y)) + .01*maximum(y)
-    else
-        initialvalues[1] = max(initialvalues[1], maximum(y)) + abs(.01*maximum(y))
-        initialvalues[2] = min(initialvalues[2], minimum(y)) - abs(.01*minimum(y))
-    end
+    iv = [initialvalues[1], initialvalues[2], initialvalues[3], initialvalues[4]]
+    initialvalues[1] = min(initialvalues[1], minimum(y)) - abs(.01*minimum(y))
+    initialvalues[2] = max(initialvalues[2], maximum(y)) + .01*maximum(y)
 
     loglike(θ::Vector{<:Real}) = sum(logpdf.(PearsonType1(θ...),y))
     fobj(θ) = -loglike(θ)
@@ -297,7 +290,7 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vec
         θ̂ = Optim.minimizer(res)
     else
         @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = initialvalues
+        θ̂ = iv
     end
         
     return PearsonType1(θ̂...)
@@ -321,6 +314,7 @@ end
 
 function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
     α, β = shape(fit_mme(pd, y))
+    a = min(a, minimum(y)-abs(.01*minimum(y)))
     initialvalue = [maximum(y)+.01*maximum(y)]
 
     loglike(θ::Vector{<:Real}) = sum(logpdf.(Beta(α, β), (y.-a)./(θ[1]-a)) .- log(θ[1]-a))
@@ -334,12 +328,10 @@ function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
 
     if Optim.converged(res)
         θ̂ = Optim.minimizer(res)
+        return [a, θ̂[1], α, β]
     else
-        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = initialvalue
+        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method."
     end
-
-    return [a, θ̂[1], α, β]
 end
 
 function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
@@ -357,10 +349,8 @@ function getinitialvalues(pd::Type{<:PearsonType1}, y::Vector{<:Real})
 
     if Optim.converged(res)
         θ̂ = Optim.minimizer(res)
+        return [θ̂[1], θ̂[2], α, β]
     else
-        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
-        θ̂ = initialvalues
+        @warn "The getinitialvalues algorithm did not find a solution. Maybe try with different initial values or with another method."
     end
-
-    return [θ̂[1], θ̂[2], α, β]
 end

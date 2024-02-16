@@ -1,6 +1,6 @@
 module PMP
 
-using Distributions, Optim
+using Distributions, Optim, Statistics
 using DataFrames, Dates, CSV, Extremes, RollingFunctions
 
 import Distributions: @check_args, location, scale, shape, params
