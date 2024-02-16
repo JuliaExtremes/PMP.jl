@@ -125,6 +125,12 @@ end
     @test maximum(fd2) ≈ 1. atol=.1
     @test shape(fd2)[1] ≈ 2. atol=.3
     @test shape(fd2)[2] ≈ 3. atol=.3
+
+    x = [Inf, 3]
+    fd3 = fit_mle(PearsonType1b, x, [10, 0.5, 3])
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd3 == PearsonType1b(10, 0.5, 3)
 end
 
 

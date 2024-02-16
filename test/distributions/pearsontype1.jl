@@ -133,7 +133,7 @@ end
     @test shape(fd1)[2] ≈ 3. atol=.3
 
     fd2 = fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 2.])
-    
+
     @test minimum(fd2) ≈ -1. atol=.1
     @test maximum(fd2) ≈ 1. atol=.1
     @test shape(fd2)[1] ≈ 2. atol=.1
@@ -151,6 +151,18 @@ end
     @test maximum(fd4) ≈ 1. atol=.1
     @test shape(fd4)[1] ≈ 2. atol=.3
     @test shape(fd4)[2] ≈ 3. atol=.3
+
+    x = [NaN, 3]
+    fd5 = fit_mle(PearsonType1, x, [10, 0.5, 3], a)
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd5 == PearsonType1(-1., 10, 0.5, 3)
+
+    x = [-Inf, 3]
+    fd6 = fit_mle(PearsonType1, x, [-1, 10, 0.5, 3])
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd6 == PearsonType1(-1., 10, 0.5, 3)
 end
 
 
