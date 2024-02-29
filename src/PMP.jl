@@ -1,6 +1,6 @@
 module PMP
 
-using Distributions, Optim, Statistics
+using Distributions, Optim, Statistics, MambaLite, ForwardDiff
 using DataFrames, Dates, CSV, Extremes, RollingFunctions
 
 import Distributions: @check_args, location, scale, shape, params
@@ -57,7 +57,7 @@ export
     fit_mme,
     fit_mle,
     getinitialvalues,
-    #fit_bayes,
+    fit_bayes,
 
     # moisture maxmization
     total_precipitation,

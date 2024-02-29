@@ -42,19 +42,38 @@ PearsonType1b() = PearsonType1b{Float64}(1.0, 1.0, 1.0)
 
 
 # Parameters
+"""
+    location(pd::PearsonType1b)
 
+Obtain distribution location parameter 0.
+"""
 function location(pd::PearsonType1b)
     return 0    
 end
 
+"""
+    scale(pd::PearsonType1b)
+
+Obtain distribution scale parameter b.
+"""
 function scale(pd::PearsonType1b)
     return pd.b
 end
 
+"""
+    shape(pd::PearsonType1b)
+
+Obtain distribution shape parameters α and β.
+"""
 function shape(pd::PearsonType1b)
     return (pd.α, pd.β)
 end
 
+"""
+    shape(pd::PearsonType1b)
+
+Obtain all distribution parameters b, α and β.
+"""
 function params(pd::PearsonType1b)
  return pd.b, shape(pd)...
 end
@@ -62,31 +81,65 @@ end
 
 
 # Evaluations
+"""
+    cdf(pd::PearsonType1b, x::Real)
 
+Compute the cumulative distribution function value of pd at point x.
+"""
 function cdf(pd::PearsonType1b, x::Real)
     return cdf(Beta(shape(pd)...), x/pd.b)
 end
 
+"""
+    insupport(pd::PearsonType1b, x::Real)
+
+Establish if the point x is within the support of the distribution pd.
+"""
 function insupport(pd::PearsonType1b, x::Real)
     return 0 <= x <= maximum(pd)
 end
 
+"""
+    logpdf(pd::PearsonType1b, x::Real)
+
+Compute the log of the value of the probability density function of pd at point x.
+"""
 function logpdf(pd::PearsonType1b, x::Real)
     return logpdf(Beta(shape(pd)...), x/pd.b) - log(pd.b)
 end
 
+"""
+    maximum(pd::PearsonType1b)
+
+Obtain the upper limit of the distribution pd, b.
+"""
 function maximum(pd::PearsonType1b)
     return scale(pd)
 end
 
+"""
+    minimum(pd::PearsonType1b)
+
+Obtain the lower limit of the distribution pd, 0.
+"""
 function minimum(pd::PearsonType1b)
     return 0
 end
 
+"""
+    quantile(pd::PearsonType1b, p::Real)
+
+Compute the quantile of probability p.
+"""
 function quantile(pd::PearsonType1b, p::Real)
     return pd.b * quantile(Beta(shape(pd)...), p)
 end
 
+"""
+    rand(rng::Random.AbstractRNG, pd::PearsonType1b)
+
+Generate a random realization of distribution pd.
+"""
 function rand(rng::Random.AbstractRNG, pd::PearsonType1b)
     return pd.b * rand(rng, Beta(shape(pd)...))
 end
@@ -94,31 +147,66 @@ end
 
 
 # Statistics
+"""
+    mean(pd::PearsonType1b)
 
+Obtain the expectation of the distribution pd.
+"""
 function mean(pd::PearsonType1b)
     return pd.b * mean(Beta(shape(pd)...))
 end
 
+"""
+    var(pd::PearsonType1b)
+
+Obtain the variance of the distribution pd.
+"""
 function var(pd::PearsonType1b)
     return pd.b^2 * var(Beta(shape(pd)...))
 end
 
+"""
+    std(pd::PearsonType1b)
+
+Obtain the standard deviation of the distribution pd.
+"""
 function std(pd::PearsonType1b)
     return pd.b * std(Beta(shape(pd)...))
 end
 
+"""
+    modes(pd::PearsonType1b)
+
+Obtain all modes (if this makes sense) of the distribution pd.
+"""
 function modes(pd::PearsonType1b)
     return pd.b .* modes(Beta(shape(pd)...))
 end
 
+"""
+    mode(pd::PearsonType1b)
+
+Obtain the first mode of the distribution pd.
+"""
 function mode(pd::PearsonType1b)
     return pd.b * mode(Beta(shape(pd)...))
 end
 
+"""
+    skewness(pd::PearsonType1b)
+
+Obtain the skewness of the distribution pd.
+"""
 function skewness(pd::PearsonType1b)
     return skewness(Beta(shape(pd)...))
 end
 
+"""
+    kurtosis(pd::PearsonType1b)
+    kurtosis(pd::PearsonType1b, correction::Bool)
+
+Obtain the excess kurtosis (if correction = false) or kurtosis (if correction = true) of the distribution pd .
+"""
 function kurtosis(pd::PearsonType1b) # excess kurtosis
     return kurtosis(Beta(shape(pd)...))
 end
@@ -131,6 +219,12 @@ function kurtosis(pd::PearsonType1b, correction::Bool) # kurtosis
     return kurtosis(td) + 3.0
 end
 
+"""
+    entropy(pd::PearsonType1b)
+    entropy(pd::PearsonType1b, base::Real)
+
+Compute the entropy value of distribution pd, w.r.t. a given base if given.
+"""
 function entropy(pd::PearsonType1b)
     return entropy(Beta(shape(pd)...)) + log(pd.b)
 end
@@ -141,7 +235,12 @@ end
 
 
 
-# fit by method of moments
+# MME
+"""
+    fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
+
+Estimate parameters of a PearsonType1b distribution with method of moments.
+"""
 
 function fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     # sample moment
@@ -183,7 +282,13 @@ end
 
 
 
-# fit by maximum likelihood 
+# MLE
+"""
+    fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
+    fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
+
+Estimate parameters of a PearsonType1b distribution with likelihood maximization.
+"""
 
 function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real})
  
@@ -216,7 +321,14 @@ end
 
 
 
-# find initial values for fit_mle
+# Mixed method
+"""
+    getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
+
+Find initial values for the likelihood maximization algorithm. 
+
+Initial values of shape parameters α and β are estimated by method of moments and initial value of scale parameter b is estimated by likelihood maximization.
+"""
 
 function getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     α, β = shape(fit_mme(pd, y))
@@ -238,4 +350,45 @@ function getinitialvalues(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     end
 
     return [θ̂[1], α, β]
+end
+
+
+
+# Bayesian fitting
+"""
+    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+
+Estimate parameters of a PearsonType1b distribution with Bayesian inference.
+
+Use NUTS (No U-Turn) sampler.
+"""
+
+function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+    nparam = 3
+    initialvalues = log.(getinitialvalues(PearsonType1b, y))
+
+    # Defines the llh function and the gradient for the NUTS algo
+    logf(θ::DenseVector) = sum(logpdf(PearsonType1b(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) #+ logpdf(Exponential(5), exp(θ[3]))
+    Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
+    function logfgrad(θ::DenseVector)
+        ll = logf(θ)
+        g = Δlogf(θ)
+        return ll, g
+    end
+
+    # MCMC
+    sim = Chains(niter, nparam, start=(warmup+1))
+    θ = NUTSVariate(initialvalues, logfgrad)
+    for i in 1:niter
+        MambaLite.sample!(θ, adapt=(i<=warmup))
+        if i>warmup
+            sim[i, :, 1] = θ
+        end
+    end
+    
+    b̂ = exp.(sim.value[:, 1])
+    α̂ = exp.(sim.value[:, 2])
+    β̂ = exp.(sim.value[:, 3])
+
+    return(b̂, α̂, β̂)
 end
