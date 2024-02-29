@@ -125,6 +125,12 @@ end
     @test maximum(fd2) ≈ 1. atol=.1
     @test shape(fd2)[1] ≈ 2. atol=.3
     @test shape(fd2)[2] ≈ 3. atol=.3
+
+    x = [Inf, 3]
+    fd3 = fit_mle(PearsonType1b, x, [10, 0.5, 3])
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd3 == PearsonType1b(10, 0.5, 3)
 end
 
 
@@ -136,4 +142,15 @@ end
     @test ivalues[1] ≈ 1. atol=.1
     @test ivalues[2] ≈ 2. atol=.3
     @test ivalues[3] ≈ 3. atol=.3
+end
+
+
+
+@testset "fit_bayes PearsonType1b" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    trace = fit_bayes(PearsonType1b, y, 1, 1000, 200)
+
+    @test mean(trace[1]) ≈ 1. atol=.01
+    @test mean(trace[2]) ≈ 2. atol=.1
+    @test mean(trace[3]) ≈ 3. atol=.1
 end

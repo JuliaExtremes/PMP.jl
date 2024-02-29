@@ -133,7 +133,7 @@ end
     @test shape(fd1)[2] ≈ 3. atol=.3
 
     fd2 = fit_mle(PearsonType1, y, [minimum(y), maximum(y), 1., 2.])
-    
+
     @test minimum(fd2) ≈ -1. atol=.1
     @test maximum(fd2) ≈ 1. atol=.1
     @test shape(fd2)[1] ≈ 2. atol=.1
@@ -151,6 +151,18 @@ end
     @test maximum(fd4) ≈ 1. atol=.1
     @test shape(fd4)[1] ≈ 2. atol=.3
     @test shape(fd4)[2] ≈ 3. atol=.3
+
+    x = [NaN, 3]
+    fd5 = fit_mle(PearsonType1, x, [10, 0.5, 3], a)
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd5 == PearsonType1(-1., 10, 0.5, 3)
+
+    x = [-Inf, 3]
+    fd6 = fit_mle(PearsonType1, x, [-1, 10, 0.5, 3])
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd6 == PearsonType1(-1., 10, 0.5, 3)
 end
 
 
@@ -171,4 +183,14 @@ end
     @test ivalues2[2] ≈ 1. atol=.1
     @test ivalues2[3] ≈ 2. atol=.3
     @test ivalues2[4] ≈ 3. atol=.4
+end
+
+
+@testset "fit_bayes PearsonType1" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    trace = fit_bayes(PearsonType1, y, 1, 1000, 200, 0)
+
+    @test mean(trace[1]) ≈ 1. atol=.01
+    @test mean(trace[2]) ≈ 2. atol=.1
+    @test mean(trace[3]) ≈ 3. atol=.1
 end
