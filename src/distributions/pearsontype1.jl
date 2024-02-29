@@ -536,10 +536,10 @@ end
 #            sim[i, :, 1] = θ
 #        end
 #    end
-
-    â = sim.value[:, 1]
-    b̂ = exp.(sim.value[:, 2])
-    α̂ = exp.(sim.value[:, 3])
-    β̂ = exp.(sim.value[:, 4])
+#
+#    â = sim.value[:, 1]
+#    b̂ = exp.(sim.value[:, 2])
+#    α̂ = exp.(sim.value[:, 3])
+#    β̂ = exp.(sim.value[:, 4])
 #    return(â, b̂, α̂, β̂)
 #end
