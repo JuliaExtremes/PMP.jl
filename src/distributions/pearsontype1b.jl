@@ -385,10 +385,6 @@ function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, ni
             sim[i, :, 1] = θ
         end
     end
-
-    b̂ = exp.(sim.value[:, 1])
-    α̂ = exp.(sim.value[:, 2])
-    β̂ = exp.(sim.value[:, 3])
     
-    return(b̂, α̂, β̂)
+    return(sim)
 end

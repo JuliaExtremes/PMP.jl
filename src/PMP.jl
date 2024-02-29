@@ -7,6 +7,7 @@ import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
 import Distributions: mean, var, std, modes, mode, skewness, kurtosis, entropy
 import Distributions: fit_mle
+import MambaLite : Chains
 
 import Random
 
@@ -57,7 +58,7 @@ export
     fit_mme,
     fit_mle,
     getinitialvalues,
-    #fit_bayes,
+    fit_bayes,
 
     # moisture maxmization
     total_precipitation,
