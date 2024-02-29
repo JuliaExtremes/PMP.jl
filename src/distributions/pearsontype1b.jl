@@ -365,10 +365,10 @@ Use NUTS (No U-Turn) sampler.
 
 function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
     nparam = 3
-    initialvalues = log.(getinitialvalues(PearsonType1b, y))
+    initialvalues = log.(getinitialvalues(pd, y))
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf(PearsonType1b(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) #+ logpdf(Exponential(5), exp(θ[3]))
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) #+ logpdf(Exponential(5), exp(θ[3]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)

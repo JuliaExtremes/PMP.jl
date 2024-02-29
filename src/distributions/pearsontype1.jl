@@ -487,12 +487,12 @@ Use NUTS (No U-Turn) sampler of MambaLite.
 """
 
 function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int, a::Real)
-    nparam = 4
+    nparam = 3
     iv = log.(getinitialvalues(PearsonType1, y))
     initialvalues = iv[2:4]
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf(PearsonType1(a, exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1]))
+    logf(θ::DenseVector) = sum(logpdf.(PearsonType1(a, exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
@@ -510,9 +510,9 @@ function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, nit
         end
     end
 
-    b̂ = exp.(sim.value[:, 2])
-    α̂ = exp.(sim.value[:, 3])
-    β̂ = exp.(sim.value[:, 4])
+    b̂ = exp.(sim.value[:, 1])
+    α̂ = exp.(sim.value[:, 2])
+    β̂ = exp.(sim.value[:, 3])
 
     return(b̂, α̂, β̂)
 end
