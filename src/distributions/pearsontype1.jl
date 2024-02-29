@@ -510,7 +510,11 @@ function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, nit
         end
     end
 
-    return(sim)
+    b̂ = exp.(sim.value[:, 2])
+    α̂ = exp.(sim.value[:, 3])
+    β̂ = exp.(sim.value[:, 4])
+
+    return(b̂, α̂, β̂)
 end
 
 #function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)

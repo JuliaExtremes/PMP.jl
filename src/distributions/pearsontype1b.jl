@@ -368,7 +368,7 @@ function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, ni
     initialvalues = log.(getinitialvalues(PearsonType1b, y))
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf(PearsonType1b(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1]))
+    logf(θ::DenseVector) = sum(logpdf(PearsonType1b(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) #+ logpdf(Exponential(5), exp(θ[3]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
@@ -386,5 +386,9 @@ function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, ni
         end
     end
     
-    return(sim)
+    b̂ = exp.(sim.value[:, 1])
+    α̂ = exp.(sim.value[:, 2])
+    β̂ = exp.(sim.value[:, 3])
+
+    return(b̂, α̂, β̂)
 end
