@@ -184,3 +184,13 @@ end
     @test ivalues2[3] ≈ 2. atol=.3
     @test ivalues2[4] ≈ 3. atol=.4
 end
+
+
+@testset "fit_bayes PearsonType1" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    trace = fit_bayes(PearsonType1, y, 1, 1000, 200, 0)
+
+    @test mean(trace[1]) ≈ 1. atol=.01
+    @test mean(trace[2]) ≈ 2. atol=.1
+    @test mean(trace[3]) ≈ 3. atol=.1
+end
