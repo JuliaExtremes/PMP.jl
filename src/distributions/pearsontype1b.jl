@@ -1,7 +1,7 @@
 """
     PearsonType1b(b,α,β)
 
-The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (0, `b`) has the probability density function for ``a<y<b``
+The *Pearson Type 1 distribution* with shape parameters `α` and `β` defined on the interval (0, `b`) has the probability density function for ``0<y<b``
 ```math
 f(y; b, \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} \\frac{y^{\\alpha-1} (b-y)^{\\beta-1}}{b^{\\alpha+\\beta-1}},
 ```
