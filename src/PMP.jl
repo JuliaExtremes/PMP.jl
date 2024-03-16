@@ -18,6 +18,7 @@ import Extremes: returnlevel
 # distributions
 include("distributions/pearsontype1.jl");
 include("distributions/pearsontype1b.jl");
+include("distributions/pearsontype1c.jl");
 
 # usual PMP 
 include("moisture_maximization.jl");
@@ -30,6 +31,7 @@ export
     # distribution types
     PearsonType1,
     PearsonType1b,
+    PearsonType1c,
 
     # methods
     params,      # get the tuple of parameter

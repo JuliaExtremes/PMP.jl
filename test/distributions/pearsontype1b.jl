@@ -1,6 +1,6 @@
 
 @testset "PearsonType1b constructor" begin
-    @test PearsonType1b(1., 1. ,1.) == PearsonType1b{Float64}(1.,1.,1.)
+    @test PearsonType1b(1., 1., 1.) == PearsonType1b{Float64}(1.,1.,1.)
     @test PearsonType1b(1, 1, 1) == PearsonType1b{Float64}(1.,1.,1.)
     @test PearsonType1b(1, 1, 1) == PearsonType1b{Float32}(1.0f0, 1.0f0, 1.0f0)
     @test  PearsonType1b() == PearsonType1b{Float64}(1.,1.,1.)
