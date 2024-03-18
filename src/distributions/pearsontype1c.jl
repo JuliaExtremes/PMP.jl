@@ -105,7 +105,7 @@ function fit_mle(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, initialvalues::Ve
     fobj(θ) = -loglike(θ)
 
     lower = [maximum(y), 2*eps(), 2*eps()]
-    upper = [Inf, Inf, Inf]
+    upper = [Inf, 1, Inf]
     
     res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
     
