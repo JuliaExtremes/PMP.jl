@@ -25,3 +25,33 @@ end
         @test logpdf(pd, x) ≈ true_log_pdf_at_x
     end
 end
+
+@testset "fit_mle PearsonType1c" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    fd = fit_mle(PearsonType1c, y, [maximum(y), 1/2, 3.])
+    
+    @test scale(fd) ≈ 1. atol=.1
+    @test shape(fd)[1] ≈ 1/3 atol=.1
+    @test shape(fd)[2] ≈ 5. atol=.1
+
+    fd2 = fit_mle(PearsonType1c, y)
+
+    @test scale(fd2) ≈ 1. atol=.1
+    @test shape(fd2)[1] ≈ 1/3 atol=.1
+    @test shape(fd2)[2] ≈ 5. atol=.1
+
+    x = [Inf, 3]
+    fd3 = fit_mle(PearsonType1c, x, [10, 0.5, 3])
+
+    @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
+    @test fd3 == PearsonType1c(10, 0.5, 3)
+end
+
+@testset "getinitialvalues PearsonType1c" begin
+    y = load("test/data/pearsontype1b_sample.jld2", "y")
+    ivalues = getinitialvalues(PearsonType1c, y)
+
+    @test ivalues[1] ≈ 1. atol=.1
+    @test ivalues[2] ≈ 1/3 atol=.1
+    @test ivalues[3] ≈ 5. atol=.1
+end

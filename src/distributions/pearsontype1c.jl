@@ -139,9 +139,9 @@ Initial values of shape parameters μ and ν are estimated by method of moments 
 function getinitialvalues(pd::Type{<:PearsonType1c}, y::Vector{<:Real})
     initialvalues = getinitialvalues(PearsonType1b, y)
     
-    α = initialvalues[1]
-    β = initialvalues[2]
-    b = initialvalues[3]
+    b = initialvalues[1]
+    α = initialvalues[2]
+    β = initialvalues[3]
     
     ν = α + β
     μ = α/ν
