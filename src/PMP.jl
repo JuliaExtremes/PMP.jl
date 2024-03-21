@@ -7,7 +7,7 @@ import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
 import Distributions: mean, var, std, modes, mode, skewness, kurtosis, entropy
 import Distributions: fit_mle
-import SpecialFunctions: loggamma
+import SpecialFunctions: loggamma, logbeta
 
 import Random
 

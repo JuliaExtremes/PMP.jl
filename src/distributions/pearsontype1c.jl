@@ -82,8 +82,10 @@ end
 Compute the log of the value of the probability density function of pd at point x.
 """
 function logpdf(pd::PearsonType1c, x::Real)
-    B = loggamma(pd.ν) - (loggamma(pd.μ*pd.ν) + loggamma(pd.ν*(1 - pd.μ)))
-    return B + (pd.μ*pd.ν - 1)*log(x) + (pd.ν*(1 - pd.μ) - 1)*log(pd.b - x) - (pd.ν - 1)*log(pd.b)
+    # @check_args loggamma = 0 aller voir la fonction du coefficient de la distribution Beta
+    #B = loggamma(pd.ν) - (loggamma(pd.μ*pd.ν) + loggamma(pd.ν*(1. - pd.μ))) # probleme quand proche de 0
+    B = -logbeta(pd.μ*pd.ν, pd.ν*(1. - pd.μ))
+    return B + (pd.μ*pd.ν - 1.)*log(x) + (pd.ν*(1. - pd.μ) - 1.)*log(pd.b - x) - (pd.ν - 1.)*log(pd.b)
 end
 
 
@@ -149,3 +151,43 @@ function getinitialvalues(pd::Type{<:PearsonType1c}, y::Vector{<:Real})
     return [b, μ, ν]
 end
 
+
+
+# Bayesian fitting
+"""
+    fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+
+Estimate parameters of a PearsonType1c distribution with Bayesian inference.
+
+Use NUTS (No U-Turn) sampler.
+"""
+
+function fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+    nparam = 3
+    initialvalues = log.(getinitialvalues(pd, y))
+
+    # Defines the llh function and the gradient for the NUTS algo
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) 
+    Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
+    function logfgrad(θ::DenseVector)
+        ll = logf(θ)
+        g = Δlogf(θ)
+        return ll, g
+    end
+
+    # NUTS algo
+    sim = Chains(niter, nparam, start=(warmup+1))
+    θ = NUTSVariate(initialvalues, logfgrad)
+    for i in 1:niter
+        MambaLite.sample!(θ, adapt=(i<=warmup))
+        if i>warmup
+            sim[i, :, 1] = θ
+        end
+    end
+    
+    b̂ = exp.(sim.value[:, 1])
+    α̂ = exp.(sim.value[:, 2])
+    β̂ = exp.(sim.value[:, 3])
+
+    return(b̂, α̂, β̂)
+end

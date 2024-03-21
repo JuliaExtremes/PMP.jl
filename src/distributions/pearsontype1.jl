@@ -500,7 +500,7 @@ function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, nit
         return ll, g
     end
 
-    # MCMC
+    # NUTS algo
     sim = Chains(niter, nparam, start=(warmup+1))
     θ = NUTSVariate(initialvalues, logfgrad)
     for i in 1:niter
@@ -531,7 +531,7 @@ end
 #        return ll, g
 #    end
 #
-#    # MCMC
+#    # NUTS algo
 #    sim = Chains(niter, nparam, start=(warmup+1))
 #    θ = NUTSVariate(initialvalues, logfgrad)
 #    for i in 1:niter
