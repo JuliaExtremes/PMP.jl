@@ -1,13 +1,14 @@
 module PMP
 
 using Distributions, Optim, Statistics, SpecialFunctions, MambaLite, ForwardDiff
-using DataFrames, Dates, CSV, Extremes, RollingFunctions
+using DataFrames, Dates, CSV, Extremes, RollingFunctions, LogExpFunctions
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
 import Distributions: mean, var, std, modes, mode, skewness, kurtosis, entropy
 import Distributions: fit_mle
 import SpecialFunctions: loggamma, logbeta
+import LogExpFunctions: logit, logistic, xlogy, xlog1py
 
 import Random
 

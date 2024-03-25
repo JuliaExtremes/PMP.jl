@@ -27,7 +27,7 @@ struct PearsonType1c{T<:Real} <: ContinuousUnivariateDistribution
 end
 
 function PearsonType1c(b::T, μ::T, ν::T ; check_args::Bool=true) where {T <: Real}
-    @check_args PearsonType1c (b, b>0) (μ, μ>zero(μ)) (ν, ν>zero(ν))
+    @check_args PearsonType1c (b, b>0) (μ, 1>=μ>zero(μ)) (ν, ν>zero(ν))
     return PearsonType1c{T}(b, μ, ν)
 end
 
@@ -76,17 +76,39 @@ end
 
 
 
+function betalogpdf_reparam(μ::Real, ν::Real, x::Real) # reparam of StatsFuns betalogpdf
+    y = clamp(x, 0, 1)
+    val = xlogy(μ*ν - 1., y) + xlog1py(ν*(1. - μ) - 1., -y) - logbeta(μ*ν, ν*(1. - μ))
+    return x < 0 || x > 1 ? oftype(val, -Inf) : val
+end
+
+
+
 """
     logpdf(pd::PearsonType1c, x::Real)
 
 Compute the log of the value of the probability density function of pd at point x.
 """
 function logpdf(pd::PearsonType1c, x::Real)
-    # @check_args loggamma = 0 aller voir la fonction du coefficient de la distribution Beta
-    #B = loggamma(pd.ν) - (loggamma(pd.μ*pd.ν) + loggamma(pd.ν*(1. - pd.μ))) # probleme quand proche de 0
-    B = -logbeta(pd.μ*pd.ν, pd.ν*(1. - pd.μ))
-    return B + (pd.μ*pd.ν - 1.)*log(x) + (pd.ν*(1. - pd.μ) - 1.)*log(pd.b - x) - (pd.ν - 1.)*log(pd.b)
+    return betalogpdf_reparam(pd.μ, pd.ν, x/pd.b) - log(pd.b)
 end
+
+"""
+function logpdf(pd::PearsonType1b, x::Real)
+    return logpdf(Beta(shape(pd)...), x/pd.b) - log(pd.b)
+end
+"""
+
+#function logpdf(pd::PearsonType1c, x::Real)
+#    B, sign = logabsbeta(pd.μ * pd.ν, pd.ν * (1. - pd.μ))
+#    if sign < 0 
+#        throw(DomainError((pd.μ, pd.ν), "`beta(a, b)` must be non-negative"))
+#    elseif pd.b - x <= 0
+#        throw(DomainError((pd.b, x), "Argument to logpdf must be within the domain of the distribution"))
+#    else
+#        return -B + (pd.μ * pd.ν - 1.) * log(x) + (pd.ν * (1. - pd.μ) - 1.) * log(pd.b - x) - (pd.ν - 1.) * log(pd.b)
+#    end
+#end
 
 
 
@@ -164,10 +186,11 @@ Use NUTS (No U-Turn) sampler.
 
 function fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
     nparam = 3
-    initialvalues = log.(getinitialvalues(pd, y))
+    iv = getinitialvalues(pd, y)
+    initialvalues = [log(iv[1]), logit(iv[2]), log(iv[3])]
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1])) 
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), logistic(θ[2]), exp(θ[3])), y)) #+ logpdf(Exponential(prior), exp(θ[1])) 
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
@@ -186,8 +209,8 @@ function fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, ni
     end
     
     b̂ = exp.(sim.value[:, 1])
-    α̂ = exp.(sim.value[:, 2])
-    β̂ = exp.(sim.value[:, 3])
+    μ̂ = logistic.(sim.value[:, 2])
+    ν̂ = exp.(sim.value[:, 3])
 
-    return(b̂, α̂, β̂)
+    return(b̂, μ̂, ν̂)
 end
