@@ -32,7 +32,7 @@ function PearsonType1c(b::T, μ::T, ν::T ; check_args::Bool=true) where {T <: R
 end
 
 PearsonType1c(b::Real, μ::Real, ν::Real; check_args::Bool=true) = PearsonType1c(promote(b, μ, ν)...; check_args=check_args)
-PearsonType1c(b::Real, μ::Integer, ν::Integer; check_args::Bool=true) = PearsonType1c(float(b), float(μ), float(ν); check_args=check_args)
+PearsonType1c(b::Integer, μ::Real, ν::Integer; check_args::Bool=true) = PearsonType1c(float(b), float(μ), float(ν); check_args=check_args)
 PearsonType1c() = PearsonType1c{Float64}(1.0, 0.5, 2.0)
 
 
@@ -177,20 +177,20 @@ end
 
 # Bayesian fitting
 """
-    fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+    fit_bayes(pd::Type{<:PearsonType1c}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
 
 Estimate parameters of a PearsonType1c distribution with Bayesian inference.
 
-Use NUTS (No U-Turn) sampler.
+Use NUTS (No U-Turn) sampler. The prior refers to the prior distribution of the bound parameter b.
 """
 
-function fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+function fit_bayes(pd::Type{<:PearsonType1c}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
     nparam = 3
     iv = getinitialvalues(pd, y)
     initialvalues = [log(iv[1]), logit(iv[2]), log(iv[3])]
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), logistic(θ[2]), exp(θ[3])), y)) #+ logpdf(Exponential(prior), exp(θ[1])) 
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), logistic(θ[2]), exp(θ[3])), y)) + logpdf(prior, exp(θ[1])) 
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
