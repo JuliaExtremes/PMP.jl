@@ -33,7 +33,7 @@ struct PearsonType1{T<:Real} <: ContinuousUnivariateDistribution
 end
 
 function PearsonType1(a::T, b::T, α::T, β::T ; check_args::Bool=true) where {T <: Real}
-    @check_args PearsonType1 ((a,b), b>a) (α, α > zero(α)) (β, β > zero(β))
+    @check_args PearsonType1 ((a,b), a < b) (α, zero(α) < α) (β, zero(β) < β)
     return PearsonType1{T}(a, b, α, β )
 end
 

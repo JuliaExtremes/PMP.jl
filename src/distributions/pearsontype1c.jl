@@ -27,7 +27,7 @@ struct PearsonType1c{T<:Real} <: ContinuousUnivariateDistribution
 end
 
 function PearsonType1c(b::T, μ::T, ν::T ; check_args::Bool=true) where {T <: Real}
-    @check_args PearsonType1c (b, b>0) (μ, 1>=μ>zero(μ)) (ν, ν>zero(ν))
+    @check_args PearsonType1c (b, zero(b) < b) (μ, zero(μ) ≤ μ ≤ one(μ)) (ν, zero(ν) < ν)
     return PearsonType1c{T}(b, μ, ν)
 end
 
@@ -93,11 +93,6 @@ function logpdf(pd::PearsonType1c, x::Real)
     return betalogpdf_reparam(pd.μ, pd.ν, x/pd.b) - log(pd.b)
 end
 
-"""
-function logpdf(pd::PearsonType1b, x::Real)
-    return logpdf(Beta(shape(pd)...), x/pd.b) - log(pd.b)
-end
-"""
 
 #function logpdf(pd::PearsonType1c, x::Real)
 #    B, sign = logabsbeta(pd.μ * pd.ν, pd.ν * (1. - pd.μ))
@@ -188,9 +183,10 @@ function fit_bayes(pd::Type{<:PearsonType1c}, prior::ContinuousUnivariateDistrib
     nparam = 3
     iv = getinitialvalues(pd, y)
     initialvalues = [log(iv[1]), logit(iv[2]), log(iv[3])]
+    #initialvalues = [log(maximum(y)), logit(mean(y)/maximum(y)), log(sum(params(fit(Beta, y./maximum(y)))))]
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), logistic(θ[2]), exp(θ[3])), y)) + logpdf(prior, exp(θ[1])) 
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), logistic(θ[2]), exp(θ[3])), y)) + logpdf(prior, exp(θ[1]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
