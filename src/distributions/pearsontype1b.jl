@@ -463,3 +463,15 @@ function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real},
 
     return(b̂, α̂, β̂)
 end
+
+
+
+"""
+    update_stepsize(δ::Real, accrate::Real)
+
+Update of the random walk step size for the Metropolis-Hastings algorithm
+"""
+function update_stepsize(δ::Real, accrate::Real)
+    Δδ = 0.01 * (2 * (accrate > 0.44) - 1)
+    return δ * exp(Δδ)
+end
