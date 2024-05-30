@@ -32,6 +32,18 @@ end
 
 
 
+#@testset "fit_mme PearsonType1c" begin
+#    y = load("test/data/pearsontype1b_sample.jld2", "y")
+#    fd = PMP.fit_mme(PearsonType1c, y)
+#    b, μ, ν = params(fd)
+
+#    @test var(y) ≈ (μ*(1-μ)/(ν+1)) * b^2
+#    @test skewness(y) ≈ 2*(1-2*μ)/(ν+2) * sqrt((ν+1)/(μ*(1-μ)))
+#    @test kurtosis(y) ≈ 6*(ν*μ^2 + 2*μ^2 - ν*μ - 2*μ + ν + 1)/(μ*(1-μ)*(ν+2)*(ν+3)) - 3
+#end
+
+
+
 @testset "fit_mle PearsonType1c" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     fd = fit_mle(PearsonType1c, y, [maximum(y), 1/2, 3.])

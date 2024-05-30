@@ -76,6 +76,20 @@ end
 
 
 
+"""
+    quantile(pd::PearsonType1c, p::Real)
+
+Compute the quantile of probability p.
+"""
+function quantile(pd::PearsonType1c, p::Real)
+    μ, ν = shape(pd)
+    α = μ*ν
+    β = ν*(1-μ)
+    return pd.b * quantile(Beta(α, β), p)
+end
+
+
+
 function betalogpdf_reparam(μ::Real, ν::Real, x::Real) # reparam of StatsFuns betalogpdf
     y = clamp(x, 0, 1)
     val = xlogy(μ*ν - 1., y) + xlog1py(ν*(1. - μ) - 1., -y) - logbeta(μ*ν, ν*(1. - μ))
@@ -94,16 +108,20 @@ function logpdf(pd::PearsonType1c, x::Real)
 end
 
 
-#function logpdf(pd::PearsonType1c, x::Real)
-#    B, sign = logabsbeta(pd.μ * pd.ν, pd.ν * (1. - pd.μ))
-#    if sign < 0 
-#        throw(DomainError((pd.μ, pd.ν), "`beta(a, b)` must be non-negative"))
-#    elseif pd.b - x <= 0
-#        throw(DomainError((pd.b, x), "Argument to logpdf must be within the domain of the distribution"))
-#    else
-#        return -B + (pd.μ * pd.ν - 1.) * log(x) + (pd.ν * (1. - pd.μ) - 1.) * log(pd.b - x) - (pd.ν - 1.) * log(pd.b)
-#    end
-#end
+
+# MME
+"""
+    fit_mme(pd::Type{<:PearsonType1c}, y::Vector{<:Real})
+
+Estimate parameters of a PearsonType1c distribution with method of moments.
+"""
+
+function fit_mme(pd::Type{<:PearsonType1c}, y::Vector{<:Real})
+    d = fit_mme(PearsonType1b, y)
+    ν = d.α * d.β
+    μ = d.α/ν
+    return PearsonType1c(d.b, μ, ν)
+end
 
 
 

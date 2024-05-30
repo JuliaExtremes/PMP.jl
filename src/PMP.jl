@@ -62,6 +62,7 @@ export
     fit_mle,
     getinitialvalues,
     fit_bayes,
+    fit_bayes_MH,
 
     # moisture maxmization
     total_precipitation,

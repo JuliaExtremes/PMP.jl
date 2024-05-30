@@ -392,3 +392,74 @@ function fit_bayes(pd::Type{<:PearsonType1b}, prior::ContinuousUnivariateDistrib
 
     return(b̂, α̂, β̂)
 end
+
+
+
+"""
+    fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution, π_α::ContinuousUnivariateDistribution, π_β::ContinuousUnivariateDistribution, warmup::Int=5000, thin::Int=10, niter::Int=20000)
+
+Estimate parameters of a PearsonType1b distribution with Metropolis-Hasting algorithm.
+"""
+
+function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, 
+    π_b::ContinuousUnivariateDistribution, 
+    π_α::ContinuousUnivariateDistribution, 
+    π_β::ContinuousUnivariateDistribution,
+    warmup::Int=5000, 
+    thin::Int=10, 
+    niter::Int=20000)
+
+    b̂ = Float64[]
+    α̂ = Float64[]
+    β̂ = Float64[]
+
+    initialvalues =  getinitialvalues(PearsonType1b, y)
+    σ = initialvalues./20
+
+    push!(b̂, initialvalues[1])
+    push!(α̂, initialvalues[2])
+    push!(β̂, initialvalues[3])
+
+    acc = falses(3, niter)
+
+    for it in 1:niter
+            # for b
+    
+        q_b = rand(Normal(b̂[end],σ[1]))
+        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_b, b̂[end]) + sum(logpdf(PearsonType1b(q_b, α̂[end], β̂[end]), y)) + logpdf(π_b, q_b)
+        cond = log(rand(Uniform(0,1))) < log_r 
+        acc[1, it] = cond
+        b_temp = q_b*cond + b̂[end]*(1-cond)
+        b̂ = push!(b̂, b_temp)
+        
+        # for α
+        q_α = rand(Normal(α̂[end],σ[2]))
+        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_α, α̂[end]) + sum(logpdf(PearsonType1b(b̂[end], q_α, β̂[end]), y)) + logpdf(π_α, q_α)
+        cond = log(rand(Uniform(0,1))) < log_r
+        acc[2, it] = cond
+        α_temp = q_α*cond + α̂[end]*(1-cond)
+        α̂ = push!(α̂, α_temp)
+    
+        # for β
+        q_β = rand(Normal(β̂[end],σ[3]))
+        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_β, β̂[end]) + sum(logpdf(PearsonType1b(b̂[end], α̂[end], q_β), y)) + logpdf(π_β, q_β)
+        cond = log(rand(Uniform(0,1))) < log_r
+        acc[3, it] = cond
+        β_temp = q_β*cond + β̂[end]*(1-cond)
+        β̂ = push!(β̂, β_temp)
+    
+        # updating instrumental distribution
+        if it % 50 == 0
+            if (it<=warmup)
+                accrate = vec(mean(acc[:, it-50+1:it], dims=2))
+                σ = update_stepsize.(σ, accrate)
+            end
+        end
+    end
+
+    b̂ = b̂[warmup:thin:niter]
+    α̂ = α̂[warmup:thin:niter]
+    β̂ = β̂[warmup:thin:niter]
+
+    return(b̂, α̂, β̂)
+end
