@@ -408,7 +408,8 @@ end
 
 
 """
-    fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution, π_α::ContinuousUnivariateDistribution, π_β::ContinuousUnivariateDistribution, warmup::Int=5000, thin::Int=10, niter::Int=20000)
+    fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution, π_α::ContinuousUnivariateDistribution, π_β::ContinuousUnivariateDistribution; warmup::Int=5000, thin::Int=10, niter::Int=20000)
+    fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int=5000, thin::Int=10, niter::Int=20000)
 
 Estimate parameters of a PearsonType1b distribution with Metropolis-Hasting algorithm.
 """
@@ -416,64 +417,128 @@ Estimate parameters of a PearsonType1b distribution with Metropolis-Hasting algo
 function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, 
     π_b::ContinuousUnivariateDistribution, 
     π_α::ContinuousUnivariateDistribution, 
-    π_β::ContinuousUnivariateDistribution,
-    warmup::Int=5000, 
-    thin::Int=10, 
-    niter::Int=20000)
+    π_β::ContinuousUnivariateDistribution;
+    warmup::Int=5000, thin::Int=10, niter::Int=20000)
 
-    b̂ = Float64[]
-    α̂ = Float64[]
-    β̂ = Float64[]
-
-    initialvalues =  getinitialvalues(PearsonType1b, y)
-    σ = initialvalues./20
-
-    push!(b̂, initialvalues[1])
-    push!(α̂, initialvalues[2])
-    push!(β̂, initialvalues[3])
+    initialvalues = params(fit_mme(pd, y))
+    δ = initialvalues./10
 
     acc = falses(3, niter)
-
-    for it in 1:niter
-            # for b
+    b = Vector{Float64}(undef, niter)
+    α = Vector{Float64}(undef, niter)
+    β = Vector{Float64}(undef, niter)
     
-        q_b = rand(Normal(b̂[end],σ[1]))
-        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_b, b̂[end]) + sum(logpdf(PearsonType1b(q_b, α̂[end], β̂[end]), y)) + logpdf(π_b, q_b)
-        cond = log(rand(Uniform(0,1))) < log_r 
-        acc[1, it] = cond
-        b_temp = q_b*cond + b̂[end]*(1-cond)
-        b̂ = push!(b̂, b_temp)
+    b[1], α[1], β[1] = initialvalues
+    
+    @showprogress for iter in 2:niter
+        b̃ = b[iter-1] + randn()*δ[1]
+        log_r = - loglikelihood(PearsonType1b(b[iter-1], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b̃, α[iter-1], β[iter-1]), y) +
+            logpdf(π_b, b̃) - logpdf(π_b, b[iter-1])
+        if log_r > log(rand())
+            b[iter] = b̃
+            acc[1, iter] = true
+        else
+            b[iter] = b[iter-1]
+        end
         
-        # for α
-        q_α = rand(Normal(α̂[end],σ[2]))
-        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_α, α̂[end]) + sum(logpdf(PearsonType1b(b̂[end], q_α, β̂[end]), y)) + logpdf(π_α, q_α)
-        cond = log(rand(Uniform(0,1))) < log_r
-        acc[2, it] = cond
-        α_temp = q_α*cond + α̂[end]*(1-cond)
-        α̂ = push!(α̂, α_temp)
-    
-        # for β
-        q_β = rand(Normal(β̂[end],σ[3]))
-        log_r = - sum(logpdf(PearsonType1b(b̂[end], α̂[end], β̂[end]), y)) - logpdf(π_β, β̂[end]) + sum(logpdf(PearsonType1b(b̂[end], α̂[end], q_β), y)) + logpdf(π_β, q_β)
-        cond = log(rand(Uniform(0,1))) < log_r
-        acc[3, it] = cond
-        β_temp = q_β*cond + β̂[end]*(1-cond)
-        β̂ = push!(β̂, β_temp)
-    
+        α̃ = exp(log(α[iter-1]) + randn()*δ[2])
+        log_r = - loglikelihood(PearsonType1b(b[iter], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b[iter], α̃, β[iter-1]), y) +
+            logpdf(π_α, α̃) - logpdf(π_α, α[iter-1])
+        if log_r > log(rand())
+            α[iter] = α̃
+            acc[2, iter] = true
+        else
+            α[iter] = α[iter-1]
+        end
+        
+        β̃ = exp(log(β[iter-1]) + randn()*δ[3])
+        log_r = - loglikelihood(PearsonType1b(b[iter], α[iter], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b[iter], α[iter], β̃), y) +
+            logpdf(π_β, β̃) - logpdf(π_β, β[iter-1])
+        if log_r > log(rand())
+            β[iter] = β̃
+            acc[3, iter] = true
+        else
+            β[iter] = β[iter-1]
+        end
+        
         # updating instrumental distribution
-        if it % 50 == 0
-            if (it<=warmup)
-                accrate = vec(mean(acc[:, it-50+1:it], dims=2))
-                σ = update_stepsize.(σ, accrate)
+        if iter % 50 == 0
+            if (iter<=warmup)
+                accrate = vec(mean(acc[:, iter-50+1:iter], dims=2))
+                δ = update_stepsize.(δ, accrate)
             end
         end
+        
     end
+    
+    b = b[warmup:thin:niter]
+    α = α[warmup:thin:niter]
+    β = β[warmup:thin:niter]
+    
+    return b, α, β
+end
 
-    b̂ = b̂[warmup:thin:niter]
-    α̂ = α̂[warmup:thin:niter]
-    β̂ = β̂[warmup:thin:niter]
+function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int=5000, thin::Int=10, niter::Int=20000)
 
-    return(b̂, α̂, β̂)
+    initialvalues = params(fit_mme(pd, y))
+    δ = initialvalues./10
+
+    acc = falses(3, niter)
+    b = Vector{Float64}(undef, niter)
+    α = Vector{Float64}(undef, niter)
+    β = Vector{Float64}(undef, niter)
+    
+    b[1], α[1], β[1] = initialvalues
+    
+    @showprogress for iter in 2:niter
+        b̃ = b[iter-1] + randn()*δ[1]
+        log_r = - loglikelihood(PearsonType1b(b[iter-1], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b̃, α[iter-1], β[iter-1]), y)
+        if log_r > log(rand())
+            b[iter] = b̃
+            acc[1, iter] = true
+        else
+            b[iter] = b[iter-1]
+        end
+        
+        α̃ = exp(log(α[iter-1]) + randn()*δ[2])
+        log_r = - loglikelihood(PearsonType1b(b[iter], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b[iter], α̃, β[iter-1]), y)
+        if log_r > log(rand())
+            α[iter] = α̃
+            acc[2, iter] = true
+        else
+            α[iter] = α[iter-1]
+        end
+        
+        β̃ = exp(log(β[iter-1]) + randn()*δ[3])
+        log_r = - loglikelihood(PearsonType1b(b[iter], α[iter], β[iter-1]), y) +
+            loglikelihood(PearsonType1b(b[iter], α[iter], β̃), y)
+        if log_r > log(rand())
+            β[iter] = β̃
+            acc[3, iter] = true
+        else
+            β[iter] = β[iter-1]
+        end
+        
+        # updating instrumental distribution
+        if iter % 50 == 0
+            if (iter<=warmup)
+                accrate = vec(mean(acc[:, iter-50+1:iter], dims=2))
+                δ = update_stepsize.(δ, accrate)
+            end
+        end
+        
+    end
+    
+    b = b[warmup:thin:niter]
+    α = α[warmup:thin:niter]
+    β = β[warmup:thin:niter]
+    
+    return b, α, β
 end
 
 
