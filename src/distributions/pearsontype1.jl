@@ -278,6 +278,12 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real)
         @warn "The parameters associated with this data cannot be found by method of moments"
         return nothing
     end
+
+    if m1 > m2
+        tmp = m1
+        m1 = m2
+        m2 = tmp
+    end
     
     # parameters estimations
     sca = a2 - a1
@@ -327,6 +333,18 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     if m1 < -1 || m2 < -1
         @warn "The parameters associated with this data cannot be found by method of moments"
         return nothing
+    end
+
+    if ss>0 && m1>m2
+        tmp = m1
+        m1 = m2
+        m2 = tmp
+    end
+    
+    if ss<0 && m1<m2
+        tmp = m1
+        m1 = m2
+        m2 = tmp
     end
     
     # parameters estimations

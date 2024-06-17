@@ -190,14 +190,14 @@ end
 
 # Bayesian fitting
 """
-    fit_bayes(pd::Type{<:PearsonType1c}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
+    fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::ContinuousUnivariateDistribution, niter::Int, warmup::Int)
 
 Estimate parameters of a PearsonType1c distribution with Bayesian inference.
 
 Use NUTS (No U-Turn) sampler. The prior refers to the prior distribution of the bound parameter b.
 """
 
-function fit_bayes(pd::Type{<:PearsonType1c}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
+function fit_bayes(pd::Type{<:PearsonType1c}, y::Vector{<:Real}, prior::ContinuousUnivariateDistribution, niter::Int, warmup::Int)
     nparam = 3
     iv = getinitialvalues(pd, y)
     initialvalues = [log(iv[1]), logit(iv[2]), log(iv[3])]

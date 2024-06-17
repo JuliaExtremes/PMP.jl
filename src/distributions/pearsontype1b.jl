@@ -271,6 +271,18 @@ function fit_mme(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     if m1 < -1 || m2 < -1
         return nothing
     end
+
+    if ss>0 && m1>m2
+        tmp = m1
+        m1 = m2
+        m2 = tmp
+    end
+    
+    if ss<0 && m1<m2
+        tmp = m1
+        m1 = m2
+        m2 = tmp
+    end
     
     # parameters estimations
     b = a2 - a1
