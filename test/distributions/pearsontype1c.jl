@@ -80,7 +80,7 @@ end
 
 @testset "fit_bayes PearsonType1c" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
-    trace = fit_bayes(PearsonType1c, Exponential(1), y, 1000, 200)
+    trace = fit_bayes(PearsonType1c, y, Exponential(1), 1000, 200)
 
     @test mean(trace[1]) ≈ 1. atol=.01
     @test mean(trace[2]) ≈ 1/3 atol=.1

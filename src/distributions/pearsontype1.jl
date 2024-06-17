@@ -335,13 +335,13 @@ function fit_mme(pd::Type{<:PearsonType1}, y::Vector{<:Real})
         return nothing
     end
 
-    if ss>0 || m1>m2
+    if ss>0 && m1>m2
         tmp = m1
         m1 = m2
         m2 = tmp
     end
     
-    if ss<0 || m1<m2
+    if ss<0 && m1<m2
         tmp = m1
         m1 = m2
         m2 = tmp
