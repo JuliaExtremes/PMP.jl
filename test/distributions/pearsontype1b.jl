@@ -154,3 +154,18 @@ end
     @test mean(trace[2]) ≈ 2. atol=.1
     @test mean(trace[3]) ≈ 3. atol=.1
 end
+
+@testset "fit_bayes_MH PearsonType1b" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    trace1 = fit_bayes_MH(PearsonType1b, y, warmup=500, thin=1, niter=5000)
+
+    @test mean(trace1[1]) ≈ 1. atol=.1
+    @test mean(trace1[2]) ≈ 2. atol=.1
+    @test mean(trace1[3]) ≈ 3. atol=.1
+
+    trace2 = fit_bayes_MH(PearsonType1b, y, Exponential(1.), Uniform(0,10.), Uniform(0,10.), warmup=500, thin=1, niter=5000)
+
+    @test mean(trace2[1]) ≈ 1. atol=.1
+    @test mean(trace2[2]) ≈ 2. atol=.1
+    @test mean(trace2[3]) ≈ 3. atol=.1
+end
