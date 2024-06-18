@@ -368,15 +368,15 @@ end
 
 # Bayesian fitting
 """
-    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int, niter::Int)
-    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int, niter::Int)
+    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int=2500, niter::Int=10000)
+    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int=2500, niter::Int=10000)
 
 Estimate parameters of a PearsonType1b distribution with Bayesian inference.
 
 Use NUTS (No U-Turn) sampler. The prior refers to the prior distribution of the bound parameter b.
 """
 
-function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int, niter::Int)
+function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int=2500, niter::Int=10000)
     nparam = 3
     initialvalues = log.(getinitialvalues(pd, y))
 
@@ -406,7 +406,7 @@ function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::Continuou
     return(b, α, β)
 end
 
-function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int, niter::Int)
+function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int=2500, niter::Int=10000)
     nparam = 3
     initialvalues = log.(getinitialvalues(pd, y))
 
