@@ -368,19 +368,20 @@ end
 
 # Bayesian fitting
 """
-    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int)
+    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int, niter::Int)
+    fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int, niter::Int)
 
 Estimate parameters of a PearsonType1b distribution with Bayesian inference.
 
 Use NUTS (No U-Turn) sampler. The prior refers to the prior distribution of the bound parameter b.
 """
 
-function fit_bayes(pd::Type{<:PearsonType1b}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
+function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, π_b::ContinuousUnivariateDistribution; warmup::Int, niter::Int)
     nparam = 3
     initialvalues = log.(getinitialvalues(pd, y))
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(prior, exp(θ[1]))
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(π_b, exp(θ[1]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
@@ -398,11 +399,41 @@ function fit_bayes(pd::Type{<:PearsonType1b}, prior::ContinuousUnivariateDistrib
         end
     end
     
-    b̂ = exp.(sim.value[:, 1])
-    α̂ = exp.(sim.value[:, 2])
-    β̂ = exp.(sim.value[:, 3])
+    b = exp.(sim.value[:, 1])
+    α = exp.(sim.value[:, 2])
+    β = exp.(sim.value[:, 3])
 
-    return(b̂, α̂, β̂)
+    return(b, α, β)
+end
+
+function fit_bayes(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int, niter::Int)
+    nparam = 3
+    initialvalues = log.(getinitialvalues(pd, y))
+
+    # Defines the llh function and the gradient for the NUTS algo
+    logf(θ::DenseVector) = sum(logpdf.(pd(exp(θ[1]), exp(θ[2]), exp(θ[3])), y))
+    Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
+    function logfgrad(θ::DenseVector)
+        ll = logf(θ)
+        g = Δlogf(θ)
+        return ll, g
+    end
+
+    # NUTS algo
+    sim = Chains(niter, nparam, start=(warmup+1))
+    θ = NUTSVariate(initialvalues, logfgrad)
+    for i in 1:niter
+        MambaLite.sample!(θ, adapt=(i<=warmup))
+        if i>warmup
+            sim[i, :, 1] = θ
+        end
+    end
+    
+    b = exp.(sim.value[:, 1])
+    α = exp.(sim.value[:, 2])
+    β = exp.(sim.value[:, 3])
+
+    return(b, α, β)
 end
 
 
@@ -430,7 +461,7 @@ function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real},
     
     b[1], α[1], β[1] = initialvalues
     
-    @showprogress for iter in 2:niter
+    for iter in 2:niter
         b̃ = b[iter-1] + randn()*δ[1]
         log_r = - loglikelihood(PearsonType1b(b[iter-1], α[iter-1], β[iter-1]), y) +
             loglikelihood(PearsonType1b(b̃, α[iter-1], β[iter-1]), y) +
@@ -493,7 +524,7 @@ function fit_bayes_MH(pd::Type{<:PearsonType1b}, y::Vector{<:Real}; warmup::Int=
     
     b[1], α[1], β[1] = initialvalues
     
-    @showprogress for iter in 2:niter
+    for iter in 2:niter
         b̃ = b[iter-1] + randn()*δ[1]
         log_r = - loglikelihood(PearsonType1b(b[iter-1], α[iter-1], β[iter-1]), y) +
             loglikelihood(PearsonType1b(b̃, α[iter-1], β[iter-1]), y)
