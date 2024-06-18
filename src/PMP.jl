@@ -1,7 +1,7 @@
 module PMP
 
 using Distributions, Optim, Statistics, SpecialFunctions, MambaLite, ForwardDiff
-using DataFrames, Dates, CSV, Extremes, RollingFunctions, LogExpFunctions, ProgressMeter
+using DataFrames, Dates, CSV, Extremes, RollingFunctions, LogExpFunctions
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 

@@ -148,11 +148,17 @@ end
 
 @testset "fit_bayes PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
-    trace = fit_bayes(PearsonType1b, Exponential(1), y, 1000, 200)
+    trace1 = fit_bayes(PearsonType1b, y, Exponential(1), warmup=200, niter=1000)
 
-    @test mean(trace[1]) ≈ 1. atol=.01
-    @test mean(trace[2]) ≈ 2. atol=.1
-    @test mean(trace[3]) ≈ 3. atol=.1
+    @test mean(trace1[1]) ≈ 1. atol=.01
+    @test mean(trace1[2]) ≈ 2. atol=.1
+    @test mean(trace1[3]) ≈ 3. atol=.1
+
+    trace2 = fit_bayes(PearsonType1b, y, warmup=200, niter=1000)
+
+    @test mean(trace2[1]) ≈ 1. atol=.01
+    @test mean(trace2[2]) ≈ 2. atol=.1
+    @test mean(trace2[3]) ≈ 3. atol=.1
 end
 
 @testset "fit_bayes_MH PearsonType1b" begin
