@@ -147,7 +147,7 @@ end
 
 
 @testset "fit_bayes PearsonType1b" begin
-    y = load("test/data/pearsontype1b_sample.jld2", "y")
+    y = load("data/pearsontype1b_sample.jld2", "y")
     trace1 = fit_bayes(PearsonType1b, y, Exponential(1), warmup=200, niter=1000)
 
     @test mean(trace1[1]) ≈ 1. atol=.01
