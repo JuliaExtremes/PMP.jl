@@ -497,20 +497,21 @@ end
 
 # Bayesian fitting
 """
-    fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int, a::Real)
+    fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real, π_b::ContinuousUnivariateDistribution; warmup::Int=2500, niter::Int=10000)
+    fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real; warmup::Int=2500, niter::Int=10000)
 
-Estimate parameters of a PearsonType1b distribution with Bayesian inference.
+Estimate parameters of a PearsonType1 distribution with Bayesian inference. Works only if a is fixed
 
 Use NUTS (No U-Turn) sampler of MambaLite.
 """
 
-function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, niter::Int, warmup::Int, a::Real)
+function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real, π_b::ContinuousUnivariateDistribution; warmup::Int=2500, niter::Int=10000)
     nparam = 3
-    iv = log.(getinitialvalues(PearsonType1, y))
+    iv = log.(getinitialvalues(pd, y))
     initialvalues = iv[2:4]
 
     # Defines the llh function and the gradient for the NUTS algo
-    logf(θ::DenseVector) = sum(logpdf.(PearsonType1(a, exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(Exponential(prior), exp(θ[1]))
+    logf(θ::DenseVector) = sum(logpdf.(pd(a, exp(θ[1]), exp(θ[2]), exp(θ[3])), y)) + logpdf(π_b, exp(θ[1]))
     Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
     function logfgrad(θ::DenseVector)
         ll = logf(θ)
@@ -528,40 +529,176 @@ function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, prior::Real, nit
         end
     end
 
-    b̂ = exp.(sim.value[:, 1])
-    α̂ = exp.(sim.value[:, 2])
-    β̂ = exp.(sim.value[:, 3])
+    b = exp.(sim.value[:, 1])
+    α = exp.(sim.value[:, 2])
+    β = exp.(sim.value[:, 3])
 
-    return(b̂, α̂, β̂)
+    return(b, α, β)
 end
 
-#function fit_bayes(pd::Type{<:PearsonType1}, prior::ContinuousUnivariateDistribution, y::Vector{<:Real}, niter::Int, warmup::Int)
-#    nparam = 4
-#    iv = getinitialvalues(PearsonType1, y)
-#    initialvalues = [iv[1], log(iv[2]), log(iv[3]), log(iv[4])]
-#
-#    # Defines the llh function and the gradient for the NUTS algo
-#    logf(θ::DenseVector) = sum(logpdf(PearsonType1(θ[1], exp(θ[2]), exp(θ[3]), exp(θ[4])), y)) + logpdf(prior, exp(θ[2]))
-#    Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
-#    function logfgrad(θ::DenseVector)
-#        ll = logf(θ)
-#        g = Δlogf(θ)
-#        return ll, g
-#    end
-#
-#    # NUTS algo
-#    sim = Chains(niter, nparam, start=(warmup+1))
-#    θ = NUTSVariate(initialvalues, logfgrad)
-#    for i in 1:niter
-#        MambaLite.sample!(θ, adapt=(i<=warmup))
-#        if i>warmup
-#            sim[i, :, 1] = θ
-#        end
-#    end
-#
-#    â = sim.value[:, 1]
-#    b̂ = exp.(sim.value[:, 2])
-#    α̂ = exp.(sim.value[:, 3])
-#    β̂ = exp.(sim.value[:, 4])
-#    return(â, b̂, α̂, β̂)
-#end
+function fit_bayes(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real; warmup::Int=2500, niter::Int=10000)
+    nparam = 3
+    iv = log.(getinitialvalues(pd, y))
+    initialvalues = iv[2:4]
+
+    # Defines the llh function and the gradient for the NUTS algo
+    logf(θ::DenseVector) = sum(logpdf.(pd(a, exp(θ[1]), exp(θ[2]), exp(θ[3])), y))
+    Δlogf(θ::DenseVector) = ForwardDiff.gradient(logf, θ)
+    function logfgrad(θ::DenseVector)
+        ll = logf(θ)
+        g = Δlogf(θ)
+        return ll, g
+    end
+
+    # NUTS algo
+    sim = Chains(niter, nparam, start=(warmup+1))
+    θ = NUTSVariate(initialvalues, logfgrad)
+    for i in 1:niter
+        MambaLite.sample!(θ, adapt=(i<=warmup))
+        if i>warmup
+            sim[i, :, 1] = θ
+        end
+    end
+    
+    b = exp.(sim.value[:, 1])
+    α = exp.(sim.value[:, 2])
+    β = exp.(sim.value[:, 3])
+
+    return(b, α, β)
+end
+
+
+
+"""
+    fit_bayes_MH(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real, π_b::ContinuousUnivariateDistribution, π_α::ContinuousUnivariateDistribution, π_β::ContinuousUnivariateDistribution; warmup::Int=5000, thin::Int=10, niter::Int=20000)
+    fit_bayes_MH(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real; warmup::Int=5000, thin::Int=10, niter::Int=20000)
+
+Estimate parameters of a PearsonType1 distribution with Metropolis-Hasting algorithm. Works only if a is fixed
+"""
+
+function fit_bayes_MH(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real,
+    π_b::ContinuousUnivariateDistribution, 
+    π_α::ContinuousUnivariateDistribution, 
+    π_β::ContinuousUnivariateDistribution;
+    warmup::Int=5000, thin::Int=10, niter::Int=20000)
+
+    initialvalues = params(fit_mme(pd, y))[2:4]
+    δ = initialvalues./10
+
+    acc = falses(3, niter)
+    b = Vector{Float64}(undef, niter)
+    α = Vector{Float64}(undef, niter)
+    β = Vector{Float64}(undef, niter)
+    
+    b[1], α[1], β[1] = initialvalues
+    
+    for iter in 2:niter
+        b̃ = b[iter-1] + randn()*δ[1]
+        log_r = - loglikelihood(PearsonType1(a, b[iter-1], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b̃, α[iter-1], β[iter-1]), y) +
+            logpdf(π_b, b̃) - logpdf(π_b, b[iter-1])
+        if log_r > log(rand())
+            b[iter] = b̃
+            acc[1, iter] = true
+        else
+            b[iter] = b[iter-1]
+        end
+        
+        α̃ = exp(log(α[iter-1]) + randn()*δ[2])
+        log_r = - loglikelihood(PearsonType1(a, b[iter], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b[iter], α̃, β[iter-1]), y) +
+            logpdf(π_α, α̃) - logpdf(π_α, α[iter-1])
+        if log_r > log(rand())
+            α[iter] = α̃
+            acc[2, iter] = true
+        else
+            α[iter] = α[iter-1]
+        end
+        
+        β̃ = exp(log(β[iter-1]) + randn()*δ[3])
+        log_r = - loglikelihood(PearsonType1(a, b[iter], α[iter], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b[iter], α[iter], β̃), y) +
+            logpdf(π_β, β̃) - logpdf(π_β, β[iter-1])
+        if log_r > log(rand())
+            β[iter] = β̃
+            acc[3, iter] = true
+        else
+            β[iter] = β[iter-1]
+        end
+        
+        # updating instrumental distribution
+        if iter % 50 == 0
+            if (iter<=warmup)
+                accrate = vec(mean(acc[:, iter-50+1:iter], dims=2))
+                δ = update_stepsize.(δ, accrate)
+            end
+        end
+        
+    end
+    
+    b = b[warmup:thin:niter]
+    α = α[warmup:thin:niter]
+    β = β[warmup:thin:niter]
+    
+    return b, α, β
+end
+
+function fit_bayes_MH(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real; warmup::Int=5000, thin::Int=10, niter::Int=20000)
+
+    initialvalues = params(fit_mme(pd, y))[2:4]
+    δ = initialvalues./10
+
+    acc = falses(3, niter)
+    b = Vector{Float64}(undef, niter)
+    α = Vector{Float64}(undef, niter)
+    β = Vector{Float64}(undef, niter)
+    
+    b[1], α[1], β[1] = initialvalues
+    
+    for iter in 2:niter
+        b̃ = b[iter-1] + randn()*δ[1]
+        log_r = - loglikelihood(PearsonType1(a, b[iter-1], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b̃, α[iter-1], β[iter-1]), y)
+        if log_r > log(rand())
+            b[iter] = b̃
+            acc[1, iter] = true
+        else
+            b[iter] = b[iter-1]
+        end
+        
+        α̃ = exp(log(α[iter-1]) + randn()*δ[2])
+        log_r = - loglikelihood(PearsonType1(a, b[iter], α[iter-1], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b[iter], α̃, β[iter-1]), y)
+        if log_r > log(rand())
+            α[iter] = α̃
+            acc[2, iter] = true
+        else
+            α[iter] = α[iter-1]
+        end
+        
+        β̃ = exp(log(β[iter-1]) + randn()*δ[3])
+        log_r = - loglikelihood(PearsonType1(a, b[iter], α[iter], β[iter-1]), y) +
+            loglikelihood(PearsonType1(a, b[iter], α[iter], β̃), y)
+        if log_r > log(rand())
+            β[iter] = β̃
+            acc[3, iter] = true
+        else
+            β[iter] = β[iter-1]
+        end
+        
+        # updating instrumental distribution
+        if iter % 50 == 0
+            if (iter<=warmup)
+                accrate = vec(mean(acc[:, iter-50+1:iter], dims=2))
+                δ = update_stepsize.(δ, accrate)
+            end
+        end
+        
+    end
+    
+    b = b[warmup:thin:niter]
+    α = α[warmup:thin:niter]
+    β = β[warmup:thin:niter]
+    
+    return b, α, β
+end
