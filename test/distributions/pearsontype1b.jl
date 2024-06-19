@@ -161,6 +161,8 @@ end
     @test mean(trace2[3]) ≈ 3. atol=.1
 end
 
+
+
 @testset "fit_bayes_MH PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     trace1 = fit_bayes_MH(PearsonType1b, y, warmup=500, thin=1, niter=5000)
