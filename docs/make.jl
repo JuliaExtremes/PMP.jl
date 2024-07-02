@@ -10,7 +10,7 @@ makedocs(sitename = "PMP.jl",
        "GettingStarted.md",
        "MoistureMaximization.md",
        "OtherMethods.md",
-       "BetaMethod.md"
+       "BetaMethod.md",
        "index.md"]
 )
 
