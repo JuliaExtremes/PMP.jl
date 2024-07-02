@@ -1,7 +1,7 @@
 
 # PMP estimation by moisture maximization 
 
-This example shows how to estimate 72h PMP by moisture maximization with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (WMO). The example uses observed data from the Montréal-Trudeau International Airport station. To avoid solid precipitation, we only consider data from May to October and from 1953 to 2012. 
+This example shows how to estimate 72h PMP by moisture maximization with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (WMO). We note here that the storm selection used here is simply using higher annual storm quantiles and no storm transposition method is included. The example uses observed daily precipitation data from the Montréal-Trudeau International Airport station from 1953 to 2012. To avoid solid precipitation, we only consider data from May to October. 
 
 
 ## Load required Julia packages
@@ -43,7 +43,7 @@ storm = storm_selection(rain.Rain, rain.Date, p, d1, d2)
 println("") # hide
 ```
 
-We also could have used `total_precipitation` then `storm_selection` as follow :
+We also could have used `total_precipitation` then `storm_selection` as follow:
 
 ```@example MoistureMaximization
 # Aggregate precipitations of duration d1 to precipitations of duration d2 without overlap
