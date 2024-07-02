@@ -10,7 +10,7 @@ Before executing this tutorial, make sure to have installed the following packag
 - *PMP.jl*
 
 and import them using the following command:
- ```@repl OtherMethods
+ ```@repl BetaMethod
 using DataFrames, PMP
 ```
 
@@ -18,7 +18,7 @@ using DataFrames, PMP
 ## Load required dataset
 
 Loading the observed daily precipitations (in mm) :
-```@example OtherMethods
+```@example BetaMethod
 # Load the data
 rain = PMP.dataset("rain")
 rain = filter(:Rain => n -> n>0, rain); # only precipitation data
