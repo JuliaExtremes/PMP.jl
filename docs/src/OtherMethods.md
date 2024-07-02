@@ -1,6 +1,6 @@
 # PMP estimation with other methods
 
-This example shows how to estimate 72h PMP by univariate GEV and Hershfield methods with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (WMO). The example uses observed data from the Montréal-Trudeau International Airport station. To avoid solid precipitation, we only consider data from May to October and from 1953 to 2012. 
+This example shows how to estimate 72h PMP by univariate GEV and Hershfield methods with *PMP.jl* and the recommended methodology by the [World Meteorological Organization](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (WMO). The example uses observed daily precipitation data from the Montréal-Trudeau International Airport station from 1953 to 2012. To avoid solid precipitation, we only consider data from May to October. 
 
 
 ## Load required Julia packages
@@ -18,7 +18,7 @@ using DataFrames, PMP
 
 ## Load required dataset
 
-Loading the observed daily precipitations (in mm) :
+Loading the observed daily precipitations (in mm):
 ```@example OtherMethods
 # Load the data
 rain = PMP.dataset("rain")
@@ -35,7 +35,7 @@ pmp_gev = PMP_GEV(rain.Rain, rain.Date, 100, 24, 72)
 println("") # hide
 ```
 
-We could estimate the 24h PMP with the following :
+We could estimate the 24h PMP with the following:
 ```@example OtherMethods
 pmp_gev = PMP_GEV(rain.Rain, rain.Date, 100)
 println("") # hide
@@ -52,7 +52,7 @@ pmp_hershfield = PMP_Hershfield(rain.Rain, rain.Date, 24, 72)
 println("") # hide
 ```
 
-We could estimate the 24h PMP with the following :
+We could estimate the 24h PMP with the following:
 ```@example OtherMethods
 pmp_hershfield_k15 = PMP_Hershfield(rain.Rain, rain.Date, 15)
 pmp_hershfield = PMP_Hershfield(rain.Rain, rain.Date)
