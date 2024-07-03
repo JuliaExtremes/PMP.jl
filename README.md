@@ -1,5 +1,5 @@
 # PMP.jl
-Probable Maximum Precipitation (PMP) estimation
+*PMP.jl* is a package to ease the estimation of the probable maximum precipitation (PMP) through various methods.
 
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
@@ -10,11 +10,16 @@ Probable Maximum Precipitation (PMP) estimation
 
 The [World Meteorological Organization (WMO) guide](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (2009) define the PMP as "the greatest depth of precipitation for a given duration meteorologically possible for a design watershed or a given storm area at a particular location at a particular time of year, with no allowance made for long-term climatic trends".
 
-*PMP.jl* is a package to ease the estimation of the PMP through various methods:
+## Documentation
+### Tutorial
+The documentation includes a tutorial on how to compute the PMP using different approaches:
 
-- Moisture maximization,
-- Hershfield empirical method,
-- Univariate GEV method,
-- Beta method.
+- Moisture maximization (MoistureMaximization.md),
+- Hershfield empirical method (OtherMethods.md),
+- Univariate GEV method (OtherMethods.md),
+- Beta method (BetaMethod.md).
 
 The WMO (2009) describes in detail steps of the first two methods. The two other ones are statistical methods developped to alleviate flaws raised by the [scientific community](https://nap.nationalacademies.org/catalog/27460/modernizing-probable-maximum-precipitation-estimation).
+
+### Notebooks
+The documentation also includes julia notebooks that tests the beta method, which is a novel approach developped here. The *01-4params.ipynb* and *02-3params.ipynb* files respectively test the 4 and 3 parameters Pearson type I models with standard parametrization and frequentist methods (method of moments, MLE, mixed method). The *03-3params.bayes* folder gathers samples and files used to test two bayesian methods (Gibbs sampler, NUTS), and *04-reparam.ipynb* tests the 3 parameters reparametrized Pearson type I model. Finally, *05-rain-data.ipynb* and *06-usual-PMP-methods.ipynb* compute PMP estimations on rain datasets observed at two stations (Pierre-Elliott-Trudeau airport of Montréal and St-Hubert) with the Beta method for the first file and moisture maximization and Hershfield empirical method for the second.
