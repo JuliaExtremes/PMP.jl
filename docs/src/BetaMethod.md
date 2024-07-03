@@ -28,7 +28,7 @@ println("") # hide
 ---
 ## Beta method
 
-The Beta method is not a WMO-recommended procedure. It estimates the upper limit of the beta distribution fitted to rain data. The method of moment, mixed method and Gibbs sampler are recommended over the maximum likelihood estimation. The four parameters with fixed lower limit is also prefered to the other models. Complete list of possibilities for this method csn be found in the index.
+The Beta method is not a WMO-recommended procedure. It estimates the upper limit of the beta distribution fitted to rain data. The method of moment, mixed method and Gibbs sampler are recommended over the maximum likelihood estimation. The four parameters with fixed lower limit is also prefered to the other models. Complete list of possibilities for this method can be found in the index.
 
 Using moment method:
 ```@example BetaMethod
