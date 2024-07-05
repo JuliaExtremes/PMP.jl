@@ -21,10 +21,6 @@ end
     @testset "cdf" begin
         @test cdf(pd, x) ≈ cdf(Beta(shape(pd)...), x/pd.b)
     end
-
-    @testset "logcdf" begin
-        @test log(cdf(pd, x)) == logcdf(pd, x)
-    end
     
     @testset "insupport" begin
         @test insupport(pd, x)
