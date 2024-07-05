@@ -91,6 +91,15 @@ function cdf(pd::PearsonType1b, x::Real)
 end
 
 """
+    logcdf(pd::PearsonType1b, x::Real)
+
+Compute the log cumulative distribution function value of pd at point x.
+"""
+function logcdf(pd::PearsonType1b, x::Real)
+    return betalogcdf(pd.α, pd.β, x/pd.b)
+end
+
+"""
     insupport(pd::PearsonType1b, x::Real)
 
 Establish if the point x is within the support of the distribution pd.
@@ -328,6 +337,50 @@ end
 function fit_mle(pd::Type{<:PearsonType1b}, y::Vector{<:Real})
     initialvalues =  getinitialvalues(PearsonType1b, y)
     fd = PMP.fit_mle(pd, y, initialvalues)
+    return fd
+end 
+
+
+
+# MLE, censored likelihood
+
+"""
+    fit_cmle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, c::Real)
+    fit_cmle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, c::Real)
+
+Estimate parameters of a PearsonType1b distribution with likelihood maximization.
+"""
+
+function fit_cmle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, c::Real)
+ 
+    iv = [initialvalues[1], initialvalues[2], initialvalues[3]]
+    initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
+
+    ind_yc = findall(r -> r<c, y) # y_i smaller than the censoring threshold
+    ind_yC = findall(r ->r≥c, y) # y_i greater or equal to the censoring threshold
+    y[ind_yc] .= c
+
+    cloglike(θ::Vector{<:Real}) = sum(logcdf.(PearsonType1b(θ...),y[ind_yc])) + sum(logpdf.(PearsonType1b(θ...),y[ind_yC]))
+    fobj(θ) = -cloglike(θ)
+
+    lower = [maximum(y), 2*eps(), 2*eps()]
+    upper = [Inf, Inf, Inf]
+    
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
+    
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = iv
+    end
+        
+    return PearsonType1b(θ̂...)
+end
+
+function fit_cmle(pd::Type{<:PearsonType1b}, y::Vector{<:Real}, c::Real)
+    initialvalues =  getinitialvalues(PearsonType1b, y)
+    fd = PMP.fit_cmle(pd, y, initialvalues, c)
     return fd
 end 
 
