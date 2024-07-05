@@ -135,6 +135,23 @@ end
 
 
 
+@testset "fit_cmle PearsonType1b" begin
+    y = load("data/pearsontype1b_sample.jld2", "y")
+    fd1 = fit_cmle(PearsonType1b, y, [maximum(y), 1., 2.], 0.001)
+
+    @test maximum(fd1) ≈ 1. atol=.05
+    @test shape(fd1)[1] ≈ 2. atol=.1
+    @test shape(fd1)[2] ≈ 3. atol=.3
+
+    fd2 = fit_cmle(PearsonType1b, y, 0.001)
+
+    @test maximum(fd2) ≈ 1. atol=.05
+    @test shape(fd2)[1] ≈ 2. atol=.1
+    @test shape(fd2)[2] ≈ 3. atol=.3
+end
+
+
+
 @testset "getinitialvalues PearsonType1b" begin
     y = load("data/pearsontype1b_sample.jld2", "y")
     ivalues = getinitialvalues(PearsonType1b, y)

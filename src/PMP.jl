@@ -1,12 +1,13 @@
 module PMP
 
-using Distributions, Optim, Statistics, SpecialFunctions, MambaLite, ForwardDiff
-using DataFrames, Dates, CSV, Extremes, RollingFunctions, LogExpFunctions
+using Distributions, Optim, Statistics, MambaLite, ForwardDiff
+using DataFrames, Dates, CSV, Extremes, RollingFunctions
 
 import Distributions: @check_args, location, scale, shape, params
 import Distributions: cdf, insupport, logpdf, minimum, maximum, quantile, rand 
 import Distributions: mean, var, std, modes, mode, skewness, kurtosis, entropy
 import Distributions: fit_mle, Beta
+import StatsFuns: betalogcdf
 import SpecialFunctions: loggamma, logbeta
 import LogExpFunctions: logit, logistic, xlogy, xlog1py
 
@@ -43,6 +44,7 @@ export
     maximum,
     insupport,   # predicate, is x in the support of the distribution?
     cdf,         # cumulative distribution function
+    logcdf,      # log cumulative distribution function
     logpdf,      # log probability density
     pdf,         # probability density function
     quantile,    # inverse of cdf (defined for p in (0,1))
@@ -60,6 +62,7 @@ export
     # distribution fitting
     fit_mme,
     fit_mle,
+    fit_cmle,
     getinitialvalues,
     fit_bayes,
     fit_bayes_MH,
