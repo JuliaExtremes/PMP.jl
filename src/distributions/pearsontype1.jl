@@ -93,6 +93,15 @@ function cdf(pd::PearsonType1, x::Real)
 end
 
 """
+    logcdf(pd::PearsonType1, x::Real)
+
+Compute the log cumulative distribution function value of pd at point x.
+"""
+function logcdf(pd::PearsonType1, x::Real)
+    return betalogcdf(pd.α, pd.β, (x-location(pd))/scale(pd))
+end
+
+"""
     insupport(pd::PearsonType1, x::Real)
 
 Establish if the point x is within the support of the distribution pd.
@@ -438,6 +447,50 @@ function fit_mle(pd::Type{<:PearsonType1}, y::Vector{<:Real})
     return fd
 end 
 
+
+
+# MLE, censored likelihood
+"""
+    fit_cmle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, a::Real, c::Real)
+    fit_cmle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real, c::Real)
+
+Estimate parameters of a PearsonType1 distribution by maximum likelihood, with a [censored likelihood](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2015WR018552)
+
+The location parameter a has to be fixed. The initialvalues vector has to be of size 0 or 3.
+"""
+
+function fit_cmle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, initialvalues::Vector{<:Real}, a::Real, c::Real)
+ 
+    iv = [initialvalues[1], initialvalues[2], initialvalues[3]]
+    initialvalues[1] = max(initialvalues[1], maximum(y)) + .01*maximum(y)
+
+    ind_yc = findall(r -> r<c, y) # y_i smaller than the censoring threshold
+    ind_yC = findall(r -> r≥c, y) # y_i greater or equal to the censoring threshold
+    y[ind_yc] .= c
+
+    cloglike(θ::Vector{<:Real}) = sum(logcdf.(PearsonType1(a, θ[1], θ[2], θ[3]), y[ind_yc])) + sum(logpdf.(PearsonType1(a, θ[1], θ[2], θ[3]), y[ind_yC]))
+    fobj(θ) = -cloglike(θ)
+
+    lower = [maximum(y), 2*eps(), 2*eps()]
+    upper = [Inf, Inf, Inf]
+    
+    res = optimize(fobj, lower, upper, initialvalues, autodiff = :forward)
+    
+    if Optim.converged(res)
+        θ̂ = Optim.minimizer(res)
+    else
+        @warn "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values."
+        θ̂ = iv
+    end
+        
+    return PearsonType1(a, θ̂[1], θ̂[2], θ̂[3])
+end
+
+function fit_cmle(pd::Type{<:PearsonType1}, y::Vector{<:Real}, a::Real, c::Real)
+    initialvalues =  getinitialvalues(PearsonType1, y, a)
+    fd = fit_cmle(pd, y, initialvalues[2:4], a, c)
+    return fd
+end
 
 
 # Mixed method

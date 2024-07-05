@@ -21,6 +21,10 @@ end
     @testset "cdf" begin
         @test cdf(pd, x) ≈ cdf(Beta(shape(pd)...),(x-location(pd))/scale(pd))
     end
+
+    @testset "logcdf" begin
+        @test log(cdf(pd, x)) == logcdf(pd, x)
+    end
     
     @testset "insupport" begin
         @test insupport(pd, x)
@@ -163,6 +167,22 @@ end
 
     @test_logs (:warn, "The maximum likelihood algorithm did not find a solution. Maybe try with different initial values or with another method. The returned values are the initial values.")
     @test fd6 == PearsonType1(-1., 10, 0.5, 3)
+end
+
+@testset "fit_cmle PearsonType1" begin
+    y = load("data/pearsontype1_sample.jld2", "y")
+    a = -1.
+    fd1 = fit_cmle(PearsonType1, y, [maximum(y), 1., 2.], a, -0.99)
+
+    @test maximum(fd1) ≈ 1. atol=.05
+    @test shape(fd1)[1] ≈ 2. atol=.1
+    @test shape(fd1)[2] ≈ 3. atol=.3
+
+    fd2 = fit_cmle(PearsonType1, y, a, -0.99)
+
+    @test maximum(fd1) ≈ 1. atol=.05
+    @test shape(fd1)[1] ≈ 2. atol=.1
+    @test shape(fd1)[2] ≈ 3. atol=.3
 end
 
 
