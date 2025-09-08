@@ -7,6 +7,7 @@
 [![codecov](https://codecov.io/gh/JuliaExtremes/PMP.jl/branch/master/graph/badge.svg?token=d8ecbbb8-ea4f-42cc-8317-39e8ceb648fb)](https://codecov.io/gh/JuliaExtremes/PMP.jl)
 [![documentation stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaextremes.github.io/PMP.jl/stable/)
 [![documentation latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://juliaextremes.github.io/PMP.jl/dev/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17078642.svg)](https://doi.org/10.5281/zenodo.17078642)
 
 The [World Meteorological Organization (WMO) guide](https://library.wmo.int/index.php?lvl=notice_display&id=1302#.ZLlVeezMKeA) (2009) define the PMP as "the greatest depth of precipitation for a given duration meteorologically possible for a design watershed or a given storm area at a particular location at a particular time of year, with no allowance made for long-term climatic trends".
 
